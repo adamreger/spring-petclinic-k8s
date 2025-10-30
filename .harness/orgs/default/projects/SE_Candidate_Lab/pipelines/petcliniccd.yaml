@@ -16,20 +16,20 @@ pipeline:
       value: "true"
   stages:
     - stage:
-        name: Deploy to Dev
+        name: Deploy API-Gateway
         identifier: Deploy_to_Dev
         description: ""
         type: Deployment
         spec:
           deploymentType: Kubernetes
           service:
-            serviceRef: springpetclinicservice
+            serviceRef: apigatewayservice
             failureStrategies:
               - onFailure:
                   errors:
                     - AllErrors
                   action:
-                    type: MarkAsFailure
+                    type: PipelineRollback
           environment:
             environmentRef: dev
             deployToAll: false

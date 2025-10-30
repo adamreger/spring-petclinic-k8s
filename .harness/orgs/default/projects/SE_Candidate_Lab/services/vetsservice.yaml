@@ -3,3 +3,22 @@ service:
   identifier: vetsservice
   orgIdentifier: default
   projectIdentifier: SE_Candidate_Lab
+  serviceDefinition:
+    spec:
+      manifests:
+        - manifest:
+            identifier: vets_manifest
+            type: K8sManifest
+            spec:
+              store:
+                type: Github
+                spec:
+                  connectorRef: github_petclinic
+                  gitFetchType: Branch
+                  paths:
+                    - k8s/vets.yaml
+                  branch: master
+              skipResourceVersioning: false
+              enableDeclarativeRollback: false
+              optionalValuesYaml: false
+    type: Kubernetes

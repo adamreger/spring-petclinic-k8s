@@ -29,19 +29,11 @@ pipeline:
                   identifier: mvn_build
                   spec:
                     shell: Sh
-                    image: maven:3.9-eclipse-temurin-17
+                    image: maven:3.9-eclipse-temurin-11
                     connectorRef: dockerhub_petclinic
-                    envVariables:
-                      MAVEN_OPTS: >-
-                        --add-exports=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED
-                        --add-opens=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED
-                        --add-opens=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED
-                        --add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED
-                        --add-opens=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED
-                        --add-opens=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED
-                        --add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED
                     command: |
-                      mvn -B -DskipTests clean package
+                      chmod +x mvnw
+                      ./mvnw -B -DskipTests clean package
               - step:
                   type: RunTests
                   name: Unit Tests
@@ -50,17 +42,10 @@ pipeline:
                     language: Java
                     buildTool: Maven
                     args: test
-                    image: maven:3.9-eclipse-temurin-17
+                    image: maven:3.9-eclipse-temurin-11
                     connectorRef: dockerhub_petclinic
-                    envVariables:
-                      MAVEN_OPTS: >-
-                        --add-exports=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED
-                        --add-opens=jdk.compiler/com.sun.tools.javac.processing=ALL-UNNAMED
-                        --add-opens=jdk.compiler/com.sun.tools.javac.model=ALL-UNNAMED
-                        --add-opens=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED
-                        --add-opens=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED
-                        --add-opens=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED
-                        --add-opens=jdk.compiler/com.sun.tools.javac.comp=ALL-UNNAMED
+                    runOnlySelectedTests: false
+                    additionalArgs: "-B"
                     reports:
                       type: JUnit
                       spec:
@@ -94,4 +79,4 @@ pipeline:
                       builder: paketobuildpacks/builder:base
                       runImage: paketobuildpacks/run:base-cnb
                       env:
-                        BP_JVM_VERSION: "17"
+                        BP_JVM_VERSION: "11"

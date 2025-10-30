@@ -25,14 +25,6 @@ pipeline:
           execution:
             steps:
               - step:
-                  type: RestoreCache
-                  name: Restore Maven Cache
-                  identifier: restore_maven_cache
-                  spec:
-                    key: m2-<+pipeline.sequenceId>
-                    restoreKeys: [ "m2-" ]
-                    paths: [ ~/.m2/repository ]
-              - step:
                   type: Run
                   name: Maven Build (skip tests)
                   identifier: mvn_build
@@ -53,14 +45,6 @@ pipeline:
                       spec:
                         paths:
                           - "target/surefire-reports/*.xml"
-              - step:
-                  type: SaveCache
-                  name: Save Maven Cache
-                  identifier: save_maven_cache
-                  spec:
-                    key: m2-<+pipeline.sequenceId>
-                    paths: [ ~/.m2/repository ]
-
     - stage:
         name: Build Image (Buildpacks) & Push
         identifier: Buildpack_Image
@@ -90,5 +74,3 @@ pipeline:
                       runImage: paketobuildpacks/run:base-cnb
                       env:
                         BP_JVM_VERSION: "21"
-                        # Petclinic uses Maven; run full build here if you prefer one build step:
-                        BP_MAVEN_BUILD_ARGUMENTS: "-DskipTests clean package"

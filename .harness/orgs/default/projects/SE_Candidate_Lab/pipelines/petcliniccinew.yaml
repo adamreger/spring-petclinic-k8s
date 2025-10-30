@@ -9,6 +9,10 @@ pipeline:
       codebase:
         connectorRef: github_petclinic
         build: <+input>
+  variables:
+    - name: RUN_DEPCHECK
+      type: String
+      value: "false"
   stages:
     - stage:
         name: Build and Test
@@ -64,12 +68,19 @@ pipeline:
                     connectorRef: dockerhub_petclinic
                     image: maven:3.9.6-eclipse-temurin-8
                     shell: Sh
-                    envVariables:
-                      NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
-                    command: |
+                    command: |-
                       unset MAVEN_CONFIG
                       export MAVEN_OPTS="-Xms256m -Xmx1024m -XX:MaxMetaspaceSize=384m"
-                      ./mvnw -B -Dmaven.repo.local=/harness/maven-repo -DskipTests org.owasp:dependency-check-maven:check
+                      ./mvnw -B \
+                      -Dmaven.repo.local=/harness/maven-repo \
+                      -DnvdApiKey=${NVD_API_KEY} \
+                      -DskipTests \
+                      org.owasp:dependency-check-maven:check
+                    envVariables:
+                      NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
+                  when:
+                    stageStatus: Success
+                    condition: <+pipeline.variables.RUN_DEPCHECK> == "true"
               - step:
                   type: RunTests
                   name: Unit Tests

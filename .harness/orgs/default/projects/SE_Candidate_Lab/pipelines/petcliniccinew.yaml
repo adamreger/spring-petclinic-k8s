@@ -41,16 +41,10 @@ pipeline:
                     connectorRef: dockerhub_petclinic
                     image: maven:3.9.6-eclipse-temurin-8
                     shell: Sh
-                    envVariables:
-                      MAVEN_CONFIG: /tmp
                     command: |
-                      echo "MAVEN_CONFIG=${MAVEN_CONFIG:-unset}"
-                      echo "MAVEN_ARGS=${MAVEN_ARGS:-unset}"
-                      echo "MAVEN_CLI_OPTS=${MAVEN_CLI_OPTS:-unset}"
-                      echo "MAVEN_OPTS=${MAVEN_OPTS:-unset}"
-                      # hard reset anything injecting bad args
-                      unset MAVEN_ARGS MAVEN_CLI_OPTS
-                      rm -f "$HOME/.m2/maven.config" || true
+                      echo "MAVEN_CONFIG pre-unset: ${MAVEN_CONFIG:-unset}"
+                      unset MAVEN_CONFIG
+                      echo "MAVEN_CONFIG post-unset: ${MAVEN_CONFIG:-unset}"
 
                       chmod +x mvnw
                       ./mvnw -v
@@ -63,12 +57,10 @@ pipeline:
                     connectorRef: dockerhub_petclinic
                     image: maven:3.9.6-eclipse-temurin-8
                     shell: Sh
-                    envVariables:
-                      MAVEN_CONFIG: /tmp
                     command: |
-                      echo "MAVEN_ARGS=${MAVEN_ARGS:-unset}  MAVEN_CLI_OPTS=${MAVEN_CLI_OPTS:-unset}"
-                      unset MAVEN_ARGS MAVEN_CLI_OPTS
-                      rm -f "$HOME/.m2/maven.config" || true
+                      echo "MAVEN_CONFIG pre-unset: ${MAVEN_CONFIG:-unset}"
+                      unset MAVEN_CONFIG
+                      echo "MAVEN_CONFIG post-unset: ${MAVEN_CONFIG:-unset}"
 
                       ./mvnw -B -Dmaven.repo.local=/harness/maven-repo -DskipTests org.owasp:dependency-check-maven:check
               - step:
@@ -79,12 +71,10 @@ pipeline:
                     connectorRef: dockerhub_petclinic
                     image: maven:3.9.6-eclipse-temurin-8
                     shell: Sh
-                    envVariables:
-                      MAVEN_CONFIG: /tmp
                     command: |
-                      echo "MAVEN_ARGS=${MAVEN_ARGS:-unset}  MAVEN_CLI_OPTS=${MAVEN_CLI_OPTS:-unset}"
-                      unset MAVEN_ARGS MAVEN_CLI_OPTS
-                      rm -f "$HOME/.m2/maven.config" || true
+                      echo "MAVEN_CONFIG pre-unset: ${MAVEN_CONFIG:-unset}"
+                      unset MAVEN_CONFIG
+                      echo "MAVEN_CONFIG post-unset: ${MAVEN_CONFIG:-unset}"
 
                       ./mvnw -B -Dmaven.repo.local=/harness/maven-repo test
     - stage:

@@ -126,7 +126,7 @@ pipeline:
                   name: Customers Image
                   identifier: build_push_customers
                   spec:
-                    connectorRef: dockerhub_petclinic
+                    connectorRef: dockerhub_push
                     repo: areger55/harness-se-lab-dockerhub-rep
                     tags:
                       - customers-<+codebase.commitSha>
@@ -134,13 +134,13 @@ pipeline:
                     context: spring-petclinic-customers-service
                     dockerfile: spring-petclinic-customers-service/Dockerfile
                     baseImageConnectorRefs:
-                      - dockerhub_petclinic
+                      - dockerhub_push
               - step:
                   type: BuildAndPushDockerRegistry
                   name: Vets Image
                   identifier: build_push_vets
                   spec:
-                    connectorRef: dockerhub_petclinic
+                    connectorRef: dockerhub_push
                     repo: areger55/harness-se-lab-dockerhub-rep
                     tags:
                       - vets-<+codebase.commitSha>
@@ -152,7 +152,7 @@ pipeline:
                   name: Visits Image
                   identifier: build_push_visits
                   spec:
-                    connectorRef: dockerhub_petclinic
+                    connectorRef: dockerhub_push
                     repo: areger55/harness-se-lab-dockerhub-rep
                     tags:
                       - visits-<+codebase.commitSha>
@@ -164,7 +164,7 @@ pipeline:
                   name: API Gateway Image
                   identifier: build_push_gateway
                   spec:
-                    connectorRef: dockerhub_petclinic
+                    connectorRef: dockerhub_push
                     repo: areger55/harness-se-lab-dockerhub-rep
                     tags:
                       - gateway-<+codebase.commitSha>

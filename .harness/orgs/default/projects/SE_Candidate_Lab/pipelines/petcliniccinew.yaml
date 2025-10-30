@@ -17,30 +17,23 @@ pipeline:
         type: CI
         spec:
           cloneCodebase: true
-          caching:
-            enabled: false
-            override: true
-            paths: []
-          buildIntelligence:
-            enabled: false
           infrastructure:
             type: KubernetesDirect
             spec:
               connectorRef: k8s_docker_desktop
               namespace: harness-delegate-ng
-              automountServiceAccountToken: true
-              nodeSelector: {}
-              os: Linux
           execution:
             steps:
               - step:
                   type: Run
                   name: Maven Build
-                  identifier: Build
+                  identifier: mvn_build
                   spec:
-                    connectorRef: dockerhub_petclinic
-                    image: maven:3.9.6-eclipse-temurin-8
                     shell: Sh
+                    image: maven:3.9.6-eclipse-temurin-8
+                    connectorRef: dockerhub_petclinic
+                    envVariables:
+                      NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
                     resources:
                       limits:
                         memory: 3Gi
@@ -49,7 +42,6 @@ pipeline:
                         memory: 1Gi
                         cpu: "1"
                     command: |
-                      unset MAVEN_CONFIG
                       chmod +x mvnw
                       java -version && ./mvnw -v
                       export MAVEN_OPTS="-Xms512m -Xmx1536m -XX:MaxMetaspaceSize=512m"
@@ -62,8 +54,9 @@ pipeline:
                     connectorRef: dockerhub_petclinic
                     image: maven:3.9.6-eclipse-temurin-8
                     shell: Sh
+                    envVariables:
+                      NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
                     command: |
-                      unset MAVEN_CONFIG
                       export MAVEN_OPTS="-Xms256m -Xmx1024m -XX:MaxMetaspaceSize=384m"
                       ./mvnw -B -Dmaven.repo.local=/harness/maven-repo -DskipTests org.owasp:dependency-check-maven:check
               - step:
@@ -76,7 +69,7 @@ pipeline:
                     args: test
                     image: maven:3.9.6-eclipse-temurin-8
                     connectorRef: dockerhub_petclinic
-                    additionalArgs: "-B -Dmaven.repo.local=/harness/maven-repo -DargLine='-Xmx1024m -XX:MaxMetaspaceSize=512m' -DforkCount=1"
+                    additionalArgs: "-B -DnvdApiKey=${NVD_API_KEY} -Dmaven.repo.local=/harness/maven-repo -DargLine='-Xmx1024m -XX:MaxMetaspaceSize=512m' -DforkCount=1"
                     runOnlySelectedTests: false
                     resources:
                       limits:
@@ -85,6 +78,8 @@ pipeline:
                       requests:
                         memory: 1Gi
                         cpu: "1"
+                    envVariables:
+                      NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
                     reports:
                       type: JUnit
                       spec:

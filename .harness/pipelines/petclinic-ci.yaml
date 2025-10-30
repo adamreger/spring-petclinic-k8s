@@ -8,10 +8,10 @@ pipeline:
       codebase:
         connectorRef: github_petclinic
         repoName: adamreger/spring-petclinic-k8s
-        build: <+input>   # branch/pr at run time
+        build: <+input>
   stages:
     - stage:
-        name: Build & Test (Maven)
+        name: Build and Test
         identifier: Build_Test
         type: CI
         spec:
@@ -25,7 +25,7 @@ pipeline:
             steps:
               - step:
                   type: Run
-                  name: Maven Build (skip tests)
+                  name: Maven Build
                   identifier: mvn_build
                   spec:
                     shell: Sh
@@ -33,10 +33,9 @@ pipeline:
                     connectorRef: dockerhub_petclinic
                     command: |
                       mvn -B -DskipTests clean package
-
               - step:
                   type: RunTests
-                  name: Unit Tests (JUnit)
+                  name: Unit Tests
                   identifier: unit_tests
                   spec:
                     language: Java
@@ -48,9 +47,9 @@ pipeline:
                       type: JUnit
                       spec:
                         paths:
-                          - "target/surefire-reports/*.xml"
+                          - target/surefire-reports/*.xml
     - stage:
-        name: Build Image (Buildpacks) & Push
+        name: Build Image and Push
         identifier: Buildpack_Image
         type: CI
         spec:
@@ -64,7 +63,7 @@ pipeline:
             steps:
               - step:
                   type: BuildAndPushDockerRegistry
-                  name: Build & Push (Buildpacks)
+                  name: Build and Push
                   identifier: build_push_pack
                   spec:
                     connectorRef: dockerhub_petclinic

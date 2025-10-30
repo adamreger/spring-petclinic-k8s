@@ -1,5 +1,5 @@
 pipeline:
-  name: petclinic-ci-new
+  name: petclinic-ci
   identifier: petcliniccinew
   projectIdentifier: SE_Candidate_Lab
   orgIdentifier: default

@@ -41,9 +41,7 @@ pipeline:
                     connectorRef: dockerhub_petclinic
                     image: maven:3.9.6-eclipse-temurin-8
                     shell: Sh
-                    command: |-
-                      |
-                      ./mvnw -B -DskipTests clean package
+                    command: ./mvnw -B -DskipTests clean package
               - step:
                   type: Run
                   name: Check Dependencies
@@ -52,7 +50,8 @@ pipeline:
                     connectorRef: dockerhub_petclinic
                     image: maven:3.9.6-eclipse-temurin-8
                     shell: Sh
-                    command: mvn dependency-check:check -U -DskipTests
+                    command: |
+                      mvn dependency-check:check -U -DskipTests
                     reports:
                       type: JUnit
                       spec:

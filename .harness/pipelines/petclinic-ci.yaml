@@ -44,6 +44,7 @@ pipeline:
                     args: test
                     image: maven:3.9-eclipse-temurin-11
                     connectorRef: dockerhub_petclinic
+                    # Use the wrapper for consistency
                     runOnlySelectedTests: false
                     additionalArgs: "-B"
                     reports:

@@ -16,7 +16,7 @@ service:
                   connectorRef: github_petclinic
                   gitFetchType: Branch
                   paths:
-                    - spring-petclinic-k8s/k8s/petclinic.yaml
+                    - k8s/petclinic.yaml
                   branch: master
               skipResourceVersioning: false
               enableDeclarativeRollback: false

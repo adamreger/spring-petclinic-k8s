@@ -29,7 +29,7 @@ pipeline:
                   identifier: mvn_build
                   spec:
                     shell: Sh
-                    image: maven:3.9-eclipse-temurin-21
+                    image: maven:3.9-eclipse-temurin-17
                     connectorRef: dockerhub_petclinic
                     command: |
                       mvn -B -DskipTests clean package
@@ -41,7 +41,7 @@ pipeline:
                     language: Java
                     buildTool: Maven
                     args: test
-                    image: maven:3.9-eclipse-temurin-21
+                    image: maven:3.9-eclipse-temurin-17
                     connectorRef: dockerhub_petclinic
                     reports:
                       type: JUnit
@@ -76,4 +76,4 @@ pipeline:
                       builder: paketobuildpacks/builder:base
                       runImage: paketobuildpacks/run:base-cnb
                       env:
-                        BP_JVM_VERSION: "21"
+                        BP_JVM_VERSION: "17"

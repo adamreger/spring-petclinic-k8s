@@ -3,3 +3,22 @@ service:
   identifier: visitsservice
   orgIdentifier: default
   projectIdentifier: SE_Candidate_Lab
+  serviceDefinition:
+    spec:
+      manifests:
+        - manifest:
+            identifier: visits
+            type: K8sManifest
+            spec:
+              store:
+                type: Github
+                spec:
+                  connectorRef: github_petclinic
+                  gitFetchType: Branch
+                  paths:
+                    - k8s/visits.yaml
+                  branch: master
+              skipResourceVersioning: false
+              enableDeclarativeRollback: false
+              optionalValuesYaml: false
+    type: Kubernetes

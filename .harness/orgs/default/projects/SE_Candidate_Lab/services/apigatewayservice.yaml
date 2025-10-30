@@ -3,3 +3,22 @@ service:
   identifier: apigatewayservice
   orgIdentifier: default
   projectIdentifier: SE_Candidate_Lab
+  serviceDefinition:
+    spec:
+      manifests:
+        - manifest:
+            identifier: api_gateway_manifest
+            type: K8sManifest
+            spec:
+              store:
+                type: Github
+                spec:
+                  connectorRef: github_petclinic
+                  gitFetchType: Branch
+                  paths:
+                    - k8s/api_gateway.yaml
+                  branch: master
+              skipResourceVersioning: false
+              enableDeclarativeRollback: false
+              optionalValuesYaml: false
+    type: Kubernetes

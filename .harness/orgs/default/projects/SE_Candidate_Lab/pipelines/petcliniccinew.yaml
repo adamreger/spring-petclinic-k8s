@@ -24,11 +24,11 @@ pipeline:
         spec:
           cloneCodebase: true
           caching:
-            enabled: true
-            override: false
+            enabled: false
+            override: true
             paths: []
           buildIntelligence:
-            enabled: true
+            enabled: false
           infrastructure:
             type: KubernetesDirect
             spec:
@@ -124,6 +124,8 @@ pipeline:
             spec:
               connectorRef: k8s_docker_desktop
               namespace: harness-delegate-ng
+              automountServiceAccountToken: true
+              nodeSelector: {}
               os: Linux
           execution:
             steps:
@@ -139,8 +141,8 @@ pipeline:
                       - customers-latest
                     context: spring-petclinic-customers-service
                     dockerfile: spring-petclinic-customers-service/Dockerfile
-                    baseImageConnectorRefs:
-                      - dockerhub_push
+                    arguments:
+                      - "--verbosity=debug"
               - step:
                   type: BuildAndPushDockerRegistry
                   name: Vets Image

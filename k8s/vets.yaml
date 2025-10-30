@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: vets
-          image: areger55/harness-se-lab-dockerhub-rep:vets-latest
+          image: areger55/harness-se-lab-dockerhub-repo:vets-latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8080

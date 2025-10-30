@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: customers
-          image: areger55/harness-se-lab-dockerhub-rep:customers-latest
+          image: areger55/harness-se-lab-dockerhub-repo:customers-latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8080

@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: api-gateway
-          image: areger55/harness-se-lab-dockerhub-rep:gateway-latest
+          image: areger55/harness-se-lab-dockerhub-repo:gateway-latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8080

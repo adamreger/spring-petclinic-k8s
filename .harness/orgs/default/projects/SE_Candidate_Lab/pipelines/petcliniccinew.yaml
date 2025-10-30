@@ -44,6 +44,9 @@ pipeline:
                     envVariables:
                       MAVEN_CONFIG: /tmp
                     command: |
+                      echo "MAVEN_CONFIG=${MAVEN_CONFIG:-unset}"
+                      test -f "$HOME/.m2/maven.config" && echo "Found ~/.m2/maven.config" && cat "$HOME/.m2/maven.config" || echo "No ~/.m2/maven.config"
+
                       rm -f "$HOME/.m2/maven.config" || true
                       ./mvnw -B -Dmaven.repo.local=/harness/maven-repo -DskipTests clean package
               - step:

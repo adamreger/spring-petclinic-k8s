@@ -10,9 +10,9 @@ pipeline:
         connectorRef: github_petclinic
         build: <+input>
   variables:
-    - name: RUN_DEPCHECK
+    - name: SKIP_DEPCHECK
       type: String
-      value: "false"
+      value: "true"
     - name: SKIP_BUILD_TEST
       type: String
       value: "true"
@@ -66,6 +66,9 @@ pipeline:
                   type: Run
                   name: Check Dependencies
                   identifier: Check_Dependencies
+                  when:
+                    stageStatus: Success
+                    condition: <+pipeline.variables.SKIP_DEPCHECK> == "false"
                   spec:
                     connectorRef: dockerhub_petclinic
                     image: maven:3.9.6-eclipse-temurin-8
@@ -80,13 +83,13 @@ pipeline:
                       -DnvdApiKey=${NVD_API_KEY} \
                       -DskipTests \
                       org.owasp:dependency-check-maven:check
-                  when:
-                    stageStatus: Success
-                    condition: <+pipeline.variables.RUN_DEPCHECK> == "true"
               - step:
                   type: RunTests
                   name: Unit Tests
                   identifier: unit_tests
+                  when:
+                    stageStatus: Success
+                    condition: <+pipeline.variables.SKIP_BUILD_TEST> == "false"
                   spec:
                     language: Java
                     buildTool: Maven

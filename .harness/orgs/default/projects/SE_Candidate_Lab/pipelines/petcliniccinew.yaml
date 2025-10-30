@@ -127,7 +127,7 @@ pipeline:
                   identifier: build_push_customers
                   spec:
                     connectorRef: dockerhub_push
-                    repo: areger55/harness-se-lab-dockerhub-rep
+                    repo: areger55/harness-se-lab-dockerhub-repo
                     tags:
                       - customers-<+codebase.commitSha>
                       - customers-latest
@@ -141,7 +141,7 @@ pipeline:
                   identifier: build_push_vets
                   spec:
                     connectorRef: dockerhub_push
-                    repo: areger55/harness-se-lab-dockerhub-rep
+                    repo: areger55/harness-se-lab-dockerhub-repo
                     tags:
                       - vets-<+codebase.commitSha>
                       - vets-latest
@@ -153,7 +153,7 @@ pipeline:
                   identifier: build_push_visits
                   spec:
                     connectorRef: dockerhub_push
-                    repo: areger55/harness-se-lab-dockerhub-rep
+                    repo: areger55/harness-se-lab-dockerhub-repo
                     tags:
                       - visits-<+codebase.commitSha>
                       - visits-latest
@@ -165,7 +165,7 @@ pipeline:
                   identifier: build_push_gateway
                   spec:
                     connectorRef: dockerhub_push
-                    repo: areger55/harness-se-lab-dockerhub-rep
+                    repo: areger55/harness-se-lab-dockerhub-repo
                     tags:
                       - gateway-<+codebase.commitSha>
                       - gateway-latest

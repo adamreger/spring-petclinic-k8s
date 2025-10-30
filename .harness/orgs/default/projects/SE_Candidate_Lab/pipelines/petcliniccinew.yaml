@@ -24,11 +24,11 @@ pipeline:
         spec:
           cloneCodebase: true
           caching:
-            enabled: false
-            override: true
+            enabled: true
+            override: false
             paths: []
           buildIntelligence:
-            enabled: false
+            enabled: true
           infrastructure:
             type: KubernetesDirect
             spec:
@@ -112,6 +112,13 @@ pipeline:
                       spec:
                         paths:
                           - target/surefire-reports/*.xml
+        description: ""
+        variables:
+          - name: test_this
+            type: String
+            description: ""
+            required: false
+            value: value
     - stage:
         name: Build Image and Push
         identifier: Build_Images

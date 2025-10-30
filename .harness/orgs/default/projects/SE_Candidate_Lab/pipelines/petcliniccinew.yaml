@@ -68,6 +68,8 @@ pipeline:
                     connectorRef: dockerhub_petclinic
                     image: maven:3.9.6-eclipse-temurin-8
                     shell: Sh
+                    envVariables:
+                      NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
                     command: |-
                       unset MAVEN_CONFIG
                       export MAVEN_OPTS="-Xms256m -Xmx1024m -XX:MaxMetaspaceSize=384m"
@@ -76,8 +78,6 @@ pipeline:
                       -DnvdApiKey=${NVD_API_KEY} \
                       -DskipTests \
                       org.owasp:dependency-check-maven:check
-                    envVariables:
-                      NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
                   when:
                     stageStatus: Success
                     condition: <+pipeline.variables.RUN_DEPCHECK> == "true"
@@ -132,19 +132,57 @@ pipeline:
             steps:
               - step:
                   type: BuildAndPushDockerRegistry
-                  name: Build and Push
-                  identifier: build_push_pack
+                  name: Customers Image
+                  identifier: build_push_customers
                   spec:
                     connectorRef: dockerhub_petclinic
-                    repo: areger55/harness-se-lab-dockerhub-repo
+                    repo: areger55/petclinic-customers
                     tags:
                       - <+codebase.commitSha>
                       - latest
-                    buildTool: Buildpacks
-                    context: .
-                    buildpacks:
-                      builder: paketobuildpacks/builder:base
-                      runImage: paketobuildpacks/run:base-cnb
-                      env:
-                        BP_JVM_VERSION: "8"
-                        BP_MAVEN_BUILD_ARGUMENTS: "-DskipTests -Dmaven.repo.local=/workspace/.m2 clean package"
+                    context: spring-petclinic-customers-service
+                    dockerfile: spring-petclinic-customers-service/Dockerfile
+                    baseImageConnectorRefs:
+                      - dockerhub_petclinic
+              - step:
+                  type: BuildAndPushDockerRegistry
+                  name: Vets Image
+                  identifier: build_push_vets
+                  spec:
+                    connectorRef: dockerhub_petclinic
+                    repo: areger55/petclinic-vets
+                    tags:
+                      - <+codebase.commitSha>
+                      - latest
+                    context: spring-petclinic-vets-service
+                    dockerfile: spring-petclinic-vets-service/Dockerfile
+                    baseImageConnectorRefs:
+                      - dockerhub_petclinic
+              - step:
+                  type: BuildAndPushDockerRegistry
+                  name: Visits Image
+                  identifier: build_push_visits
+                  spec:
+                    connectorRef: dockerhub_petclinic
+                    repo: areger55/petclinic-visits
+                    tags:
+                      - <+codebase.commitSha>
+                      - latest
+                    context: spring-petclinic-visits-service
+                    dockerfile: spring-petclinic-visits-service/Dockerfile
+                    baseImageConnectorRefs:
+                      - dockerhub_petclinic
+              - step:
+                  type: BuildAndPushDockerRegistry
+                  name: API Gateway Image
+                  identifier: build_push_gateway
+                  spec:
+                    connectorRef: dockerhub_petclinic
+                    repo: areger55/petclinic-gateway
+                    tags:
+                      - <+codebase.commitSha>
+                      - latest
+                    context: spring-petclinic-api-gateway
+                    dockerfile: spring-petclinic-api-gateway/Dockerfile
+                    baseImageConnectorRefs:
+                      - dockerhub_petclinic

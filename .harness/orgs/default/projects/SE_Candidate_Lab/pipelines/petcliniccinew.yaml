@@ -113,12 +113,6 @@ pipeline:
                         paths:
                           - target/surefire-reports/*.xml
         description: ""
-        variables:
-          - name: test_this
-            type: String
-            description: ""
-            required: false
-            value: value
     - stage:
         name: Build Image and Push
         identifier: Build_Images

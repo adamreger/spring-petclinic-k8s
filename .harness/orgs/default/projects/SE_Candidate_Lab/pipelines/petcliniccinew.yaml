@@ -13,11 +13,13 @@ pipeline:
     - name: RUN_DEPCHECK
       type: String
       value: "false"
+    - name: SKIP_BUILD_TEST
+      type: String
+      value: "true"
   stages:
     - stage:
         name: Build and Test
         identifier: build_and_test
-        description: ""
         type: CI
         spec:
           cloneCodebase: true

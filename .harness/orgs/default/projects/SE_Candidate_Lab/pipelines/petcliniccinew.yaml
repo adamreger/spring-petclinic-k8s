@@ -41,7 +41,11 @@ pipeline:
                     connectorRef: dockerhub_petclinic
                     image: maven:3.9.6-eclipse-temurin-8
                     shell: Sh
-                    command: ./mvnw -B -DskipTests clean package
+                    envVariables:
+                      MAVEN_CONFIG: /tmp
+                    command: |
+                      rm -f "$HOME/.m2/maven.config" || true
+                      ./mvnw -B -Dmaven.repo.local=/harness/maven-repo -DskipTests clean package
               - step:
                   type: Run
                   name: Check Dependencies
@@ -50,30 +54,24 @@ pipeline:
                     connectorRef: dockerhub_petclinic
                     image: maven:3.9.6-eclipse-temurin-8
                     shell: Sh
+                    envVariables:
+                      MAVEN_CONFIG: /tmp
                     command: |
-                      mvn dependency-check:check -U -DskipTests
-                    reports:
-                      type: JUnit
-                      spec:
-                        paths:
-                          - /harness/target/*.xml
+                      rm -f "$HOME/.m2/maven.config" || true
+                      ./mvnw -B -Dmaven.repo.local=/harness/maven-repo -DskipTests org.owasp:dependency-check-maven:check
               - step:
-                  type: RunTests
+                  type: Run
                   name: Unit Tests
                   identifier: unit_tests
                   spec:
-                    language: Java
-                    buildTool: Maven
-                    args: test
-                    image: maven:3.9.6-eclipse-temurin-8
                     connectorRef: dockerhub_petclinic
-                    runOnlySelectedTests: false
-                    additionalArgs: "-B"
-                    reports:
-                      type: JUnit
-                      spec:
-                        paths:
-                          - target/surefire-reports/*.xml
+                    image: maven:3.9.6-eclipse-temurin-8
+                    shell: Sh
+                    envVariables:
+                      MAVEN_CONFIG: /tmp
+                    command: |
+                      rm -f "$HOME/.m2/maven.config" || true
+                      ./mvnw -B -Dmaven.repo.local=/harness/maven-repo test
     - stage:
         name: Build Image and Push
         identifier: Buildpack_Image

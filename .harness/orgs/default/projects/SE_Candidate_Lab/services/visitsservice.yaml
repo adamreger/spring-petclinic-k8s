@@ -1,0 +1,5 @@
+service:
+  name: visits-service
+  identifier: visitsservice
+  orgIdentifier: default
+  projectIdentifier: SE_Candidate_Lab

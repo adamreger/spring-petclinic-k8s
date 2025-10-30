@@ -7,7 +7,7 @@ service:
     spec:
       manifests:
         - manifest:
-            identifier: visits
+            identifier: visits_manifest
             type: K8sManifest
             spec:
               store:

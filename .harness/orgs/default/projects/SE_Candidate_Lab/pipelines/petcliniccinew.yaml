@@ -140,8 +140,8 @@ pipeline:
                     tags:
                       - <+codebase.commitSha>
                       - latest
-                    caching: false
                     buildTool: Buildpacks
+                    context: .
                     buildpacks:
                       builder: paketobuildpacks/builder:base
                       runImage: paketobuildpacks/run:base-cnb

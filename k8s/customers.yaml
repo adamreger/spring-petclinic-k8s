@@ -1,0 +1,70 @@
+# ---------------------------
+# Namespace
+# ---------------------------
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: petclinic
+
+---
+# ---------------------------
+# Customers Service
+# ---------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customers
+  namespace: petclinic
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: customers
+  template:
+    metadata:
+      labels:
+        app: customers
+    spec:
+      containers:
+        - name: customers
+          image: areger55/harness-se-lab-dockerhub-rep:customers-latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            # If your services default to H2, leave this out.
+            # Uncomment the next line only if you later add MySQL:
+            # - name: SPRING_PROFILES_ACTIVE
+            #   value: "mysql"
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: customers
+  namespace: petclinic
+spec:
+  type: ClusterIP
+  selector:
+    app: customers
+  ports:
+    - port: 8080
+      targetPort: 8080

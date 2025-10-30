@@ -1,0 +1,76 @@
+# ---------------------------
+# Namespace
+# ---------------------------
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: petclinic
+
+---
+# ---------------------------
+# API Gateway
+# ---------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: petclinic
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: areger55/harness-se-lab-dockerhub-rep:gateway-latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            # If the gateway needs explicit downstream URLs, set them here.
+            # Remove if your build already auto-discovers by service DNS names.
+            - name: CUSTOMERS_SERVICE_URL
+              value: "http://customers.petclinic.svc.cluster.local:8080"
+            - name: VETS_SERVICE_URL
+              value: "http://vets.petclinic.svc.cluster.local:8080"
+            - name: VISITS_SERVICE_URL
+              value: "http://visits.petclinic.svc.cluster.local:8080"
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: petclinic
+spec:
+  type: NodePort
+  selector:
+    app: api-gateway
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      nodePort: 30808   # change if this port is taken locally

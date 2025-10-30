@@ -1,0 +1,65 @@
+# ---------------------------
+# Namespace
+# ---------------------------
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: petclinic
+
+---
+# ---------------------------
+# Vets Service
+# ---------------------------
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vets
+  namespace: petclinic
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vets
+  template:
+    metadata:
+      labels:
+        app: vets
+    spec:
+      containers:
+        - name: vets
+          image: areger55/harness-se-lab-dockerhub-rep:vets-latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vets
+  namespace: petclinic
+spec:
+  type: ClusterIP
+  selector:
+    app: vets
+  ports:
+    - port: 8080
+      targetPort: 8080

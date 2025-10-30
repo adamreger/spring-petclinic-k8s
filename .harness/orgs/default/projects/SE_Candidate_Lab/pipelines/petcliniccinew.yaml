@@ -41,13 +41,18 @@ pipeline:
                     connectorRef: dockerhub_petclinic
                     image: maven:3.9.6-eclipse-temurin-8
                     shell: Sh
+                    resources:
+                      limits:
+                        memory: 3Gi
+                        cpu: "2"
+                      requests:
+                        memory: 1Gi
+                        cpu: "1"
                     command: |
-                      echo "MAVEN_CONFIG pre-unset: ${MAVEN_CONFIG:-unset}"
                       unset MAVEN_CONFIG
-                      echo "MAVEN_CONFIG post-unset: ${MAVEN_CONFIG:-unset}"
-
                       chmod +x mvnw
-                      ./mvnw -v
+                      java -version && ./mvnw -v
+                      export MAVEN_OPTS="-Xms512m -Xmx1536m -XX:MaxMetaspaceSize=512m"
                       ./mvnw -B -Dmaven.repo.local=/harness/maven-repo -DskipTests clean package
               - step:
                   type: Run
@@ -58,25 +63,33 @@ pipeline:
                     image: maven:3.9.6-eclipse-temurin-8
                     shell: Sh
                     command: |
-                      echo "MAVEN_CONFIG pre-unset: ${MAVEN_CONFIG:-unset}"
                       unset MAVEN_CONFIG
-                      echo "MAVEN_CONFIG post-unset: ${MAVEN_CONFIG:-unset}"
-
+                      export MAVEN_OPTS="-Xms256m -Xmx1024m -XX:MaxMetaspaceSize=384m"
                       ./mvnw -B -Dmaven.repo.local=/harness/maven-repo -DskipTests org.owasp:dependency-check-maven:check
               - step:
-                  type: Run
+                  type: RunTests
                   name: Unit Tests
                   identifier: unit_tests
                   spec:
-                    connectorRef: dockerhub_petclinic
+                    language: Java
+                    buildTool: Maven
+                    args: test
                     image: maven:3.9.6-eclipse-temurin-8
-                    shell: Sh
-                    command: |
-                      echo "MAVEN_CONFIG pre-unset: ${MAVEN_CONFIG:-unset}"
-                      unset MAVEN_CONFIG
-                      echo "MAVEN_CONFIG post-unset: ${MAVEN_CONFIG:-unset}"
-
-                      ./mvnw -B -Dmaven.repo.local=/harness/maven-repo test
+                    connectorRef: dockerhub_petclinic
+                    additionalArgs: "-B -Dmaven.repo.local=/harness/maven-repo -DargLine='-Xmx1024m -XX:MaxMetaspaceSize=512m' -DforkCount=1"
+                    runOnlySelectedTests: false
+                    resources:
+                      limits:
+                        memory: 3Gi
+                        cpu: "2"
+                      requests:
+                        memory: 1Gi
+                        cpu: "1"
+                    reports:
+                      type: JUnit
+                      spec:
+                        paths:
+                          - target/surefire-reports/*.xml
     - stage:
         name: Build Image and Push
         identifier: Buildpack_Image
@@ -117,3 +130,4 @@ pipeline:
                       runImage: paketobuildpacks/run:base-cnb
                       env:
                         BP_JVM_VERSION: "8"
+                        BP_MAVEN_BUILD_ARGUMENTS: "-DskipTests -Dmaven.repo.local=/workspace/.m2 clean package"

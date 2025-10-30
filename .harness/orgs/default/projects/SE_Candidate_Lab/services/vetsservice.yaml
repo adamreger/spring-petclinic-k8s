@@ -1,0 +1,5 @@
+service:
+  name: vets-service
+  identifier: vetsservice
+  orgIdentifier: default
+  projectIdentifier: SE_Candidate_Lab

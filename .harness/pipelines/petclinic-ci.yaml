@@ -21,7 +21,6 @@ pipeline:
             spec:
               connectorRef: k8s_docker_desktop
               namespace: harness-ci
-              automountServiceAccountToken: true
           execution:
             steps:
               - step:
@@ -30,8 +29,11 @@ pipeline:
                   identifier: mvn_build
                   spec:
                     shell: Sh
+                    image: maven:3.9-eclipse-temurin-21
+                    connectorRef: dockerhub_petclinic
                     command: |
                       mvn -B -DskipTests clean package
+
               - step:
                   type: RunTests
                   name: Unit Tests (JUnit)
@@ -40,6 +42,8 @@ pipeline:
                     language: Java
                     buildTool: Maven
                     args: test
+                    image: maven:3.9-eclipse-temurin-21
+                    connectorRef: dockerhub_petclinic
                     reports:
                       type: JUnit
                       spec:

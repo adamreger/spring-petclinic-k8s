@@ -11,17 +11,18 @@ pipeline:
         build: <+input>
   stages:
     - stage:
-        name: Build Test and Push
-        identifier: Build_Test_and_Push
+        name: Build and Test
+        identifier: build_and_test
         description: ""
         type: CI
         spec:
           cloneCodebase: true
           caching:
-            enabled: true
+            enabled: false
             override: true
+            paths: []
           buildIntelligence:
-            enabled: true
+            enabled: false
           infrastructure:
             type: KubernetesDirect
             spec:
@@ -34,20 +35,22 @@ pipeline:
             steps:
               - step:
                   type: Run
-                  name: Build
+                  name: Maven Build
                   identifier: Build
                   spec:
                     connectorRef: dockerhub_petclinic
-                    image: maven:3.8-jdk-11
+                    image: maven:3.8.8-openjdk-8
                     shell: Sh
-                    command: mvn clean package dependency:copy-dependencies
+                    command: |-
+                      |
+                      ./mvnw -B -DskipTests clean package
               - step:
                   type: Run
                   name: Check Dependencies
                   identifier: Check_Dependencies
                   spec:
                     connectorRef: dockerhub_petclinic
-                    image: maven:3.8-jdk-11
+                    image: maven:3.8.8-openjdk-8
                     shell: Sh
                     command: mvn dependency-check:check -U -DskipTests
                     reports:
@@ -55,3 +58,60 @@ pipeline:
                       spec:
                         paths:
                           - /harness/target/*.xml
+              - step:
+                  type: RunTests
+                  name: Unit Tests
+                  identifier: unit_tests
+                  spec:
+                    language: Java
+                    buildTool: Maven
+                    args: test
+                    image: maven:3.8.8-openjdk-8
+                    connectorRef: dockerhub_petclinic
+                    runOnlySelectedTests: false
+                    additionalArgs: "-B"
+                    reports:
+                      type: JUnit
+                      spec:
+                        paths:
+                          - target/surefire-reports/*.xml
+    - stage:
+        name: Build Image and Push
+        identifier: Buildpack_Image
+        description: ""
+        type: CI
+        spec:
+          cloneCodebase: true
+          caching:
+            enabled: false
+            override: true
+            paths: []
+          buildIntelligence:
+            enabled: false
+          infrastructure:
+            type: KubernetesDirect
+            spec:
+              connectorRef: k8s_docker_desktop
+              namespace: harness-delegate-ng
+              automountServiceAccountToken: true
+              nodeSelector: {}
+              os: Linux
+          execution:
+            steps:
+              - step:
+                  type: BuildAndPushDockerRegistry
+                  name: Build and Push
+                  identifier: build_push_pack
+                  spec:
+                    connectorRef: dockerhub_petclinic
+                    repo: areger55/harness-se-lab-dockerhub-repo
+                    tags:
+                      - <+codebase.commitSha>
+                      - latest
+                    caching: false
+                    buildTool: Buildpacks
+                    buildpacks:
+                      builder: paketobuildpacks/builder:base
+                      runImage: paketobuildpacks/run:base-cnb
+                      env:
+                        BP_JVM_VERSION: "8"

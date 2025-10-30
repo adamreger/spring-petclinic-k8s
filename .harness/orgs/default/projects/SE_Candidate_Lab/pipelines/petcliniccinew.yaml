@@ -1,0 +1,57 @@
+pipeline:
+  name: petclinic-ci-new
+  identifier: petcliniccinew
+  projectIdentifier: SE_Candidate_Lab
+  orgIdentifier: default
+  tags: {}
+  properties:
+    ci:
+      codebase:
+        connectorRef: github_petclinic
+        build: <+input>
+  stages:
+    - stage:
+        name: Build Test and Push
+        identifier: Build_Test_and_Push
+        description: ""
+        type: CI
+        spec:
+          cloneCodebase: true
+          caching:
+            enabled: true
+            override: true
+          buildIntelligence:
+            enabled: true
+          infrastructure:
+            type: KubernetesDirect
+            spec:
+              connectorRef: k8s_docker_desktop
+              namespace: harness-delegate-ng
+              automountServiceAccountToken: true
+              nodeSelector: {}
+              os: Linux
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Build
+                  identifier: Build
+                  spec:
+                    connectorRef: dockerhub_petclinic
+                    image: maven:3.8-jdk-11
+                    shell: Sh
+                    command: mvn clean package dependency:copy-dependencies
+              - step:
+                  type: Run
+                  name: Check Dependencies
+                  identifier: Check_Dependencies
+                  spec:
+                    connectorRef: dockerhub_petclinic
+                    image: maven:3.8-jdk-11
+                    shell: Sh
+                    command: mvn dependency-check:check -U -DskipTests
+                    reports:
+                      type: JUnit
+                      spec:
+                        paths:
+                          - /harness/target/*.xml

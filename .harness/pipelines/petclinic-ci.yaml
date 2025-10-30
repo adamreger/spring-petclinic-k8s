@@ -1,0 +1,94 @@
+pipeline:
+  name: petclinic-ci
+  identifier: petclinic_ci
+  projectIdentifier: SE_Candidate_Lab
+  orgIdentifier: default
+  properties:
+    ci:
+      codebase:
+        connectorRef: github_petclinic
+        repoName: adamreger/spring-petclinic-k8s
+        build: <+input>   # branch/pr at run time
+  stages:
+    - stage:
+        name: Build & Test (Maven)
+        identifier: Build_Test
+        type: CI
+        spec:
+          cloneCodebase: true
+          infrastructure:
+            type: KubernetesDirect
+            spec:
+              connectorRef: k8s_docker_desktop
+              namespace: harness-ci
+              automountServiceAccountToken: true
+          execution:
+            steps:
+              - step:
+                  type: RestoreCache
+                  name: Restore Maven Cache
+                  identifier: restore_maven_cache
+                  spec:
+                    key: m2-<+pipeline.sequenceId>
+                    restoreKeys: [ "m2-" ]
+                    paths: [ ~/.m2/repository ]
+              - step:
+                  type: Run
+                  name: Maven Build (skip tests)
+                  identifier: mvn_build
+                  spec:
+                    shell: Sh
+                    command: |
+                      mvn -B -DskipTests clean package
+              - step:
+                  type: RunTests
+                  name: Unit Tests (JUnit)
+                  identifier: unit_tests
+                  spec:
+                    language: Java
+                    buildTool: Maven
+                    args: test
+                    reports:
+                      type: JUnit
+                      spec:
+                        paths:
+                          - "target/surefire-reports/*.xml"
+              - step:
+                  type: SaveCache
+                  name: Save Maven Cache
+                  identifier: save_maven_cache
+                  spec:
+                    key: m2-<+pipeline.sequenceId>
+                    paths: [ ~/.m2/repository ]
+
+    - stage:
+        name: Build Image (Buildpacks) & Push
+        identifier: Buildpack_Image
+        type: CI
+        spec:
+          cloneCodebase: true
+          infrastructure:
+            type: KubernetesDirect
+            spec:
+              connectorRef: k8s_docker_desktop
+              namespace: harness-ci
+          execution:
+            steps:
+              - step:
+                  type: BuildAndPushDockerRegistry
+                  name: Build & Push (Buildpacks)
+                  identifier: build_push_pack
+                  spec:
+                    connectorRef: dockerhub_petclinic
+                    repo: areger55/harness-se-lab-dockerhub-repo
+                    tags:
+                      - <+codebase.commitSha>
+                      - latest
+                    buildTool: Buildpacks
+                    buildpacks:
+                      builder: paketobuildpacks/builder:base
+                      runImage: paketobuildpacks/run:base-cnb
+                      env:
+                        BP_JVM_VERSION: "21"
+                        # Petclinic uses Maven; run full build here if you prefer one build step:
+                        BP_MAVEN_BUILD_ARGUMENTS: "-DskipTests clean package"

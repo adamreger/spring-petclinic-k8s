@@ -1,0 +1,5 @@
+service:
+  name: spring-petclinic-service
+  identifier: springpetclinicservice
+  orgIdentifier: default
+  projectIdentifier: SE_Candidate_Lab

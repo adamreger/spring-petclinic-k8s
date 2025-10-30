@@ -109,24 +109,15 @@ pipeline:
                           - target/surefire-reports/*.xml
     - stage:
         name: Build Image and Push
-        identifier: Buildpack_Image
-        description: ""
+        identifier: Build_Images
         type: CI
         spec:
           cloneCodebase: true
-          caching:
-            enabled: false
-            override: true
-            paths: []
-          buildIntelligence:
-            enabled: false
           infrastructure:
             type: KubernetesDirect
             spec:
               connectorRef: k8s_docker_desktop
               namespace: harness-delegate-ng
-              automountServiceAccountToken: true
-              nodeSelector: {}
               os: Linux
           execution:
             steps:
@@ -136,10 +127,10 @@ pipeline:
                   identifier: build_push_customers
                   spec:
                     connectorRef: dockerhub_petclinic
-                    repo: areger55/petclinic-customers
+                    repo: areger55/harness-se-lab-dockerhub-rep
                     tags:
-                      - <+codebase.commitSha>
-                      - latest
+                      - customers-<+codebase.commitSha>
+                      - customers-latest
                     context: spring-petclinic-customers-service
                     dockerfile: spring-petclinic-customers-service/Dockerfile
                     baseImageConnectorRefs:
@@ -150,39 +141,33 @@ pipeline:
                   identifier: build_push_vets
                   spec:
                     connectorRef: dockerhub_petclinic
-                    repo: areger55/petclinic-vets
+                    repo: areger55/harness-se-lab-dockerhub-rep
                     tags:
-                      - <+codebase.commitSha>
-                      - latest
+                      - vets-<+codebase.commitSha>
+                      - vets-latest
                     context: spring-petclinic-vets-service
                     dockerfile: spring-petclinic-vets-service/Dockerfile
-                    baseImageConnectorRefs:
-                      - dockerhub_petclinic
               - step:
                   type: BuildAndPushDockerRegistry
                   name: Visits Image
                   identifier: build_push_visits
                   spec:
                     connectorRef: dockerhub_petclinic
-                    repo: areger55/petclinic-visits
+                    repo: areger55/harness-se-lab-dockerhub-rep
                     tags:
-                      - <+codebase.commitSha>
-                      - latest
+                      - visits-<+codebase.commitSha>
+                      - visits-latest
                     context: spring-petclinic-visits-service
                     dockerfile: spring-petclinic-visits-service/Dockerfile
-                    baseImageConnectorRefs:
-                      - dockerhub_petclinic
               - step:
                   type: BuildAndPushDockerRegistry
                   name: API Gateway Image
                   identifier: build_push_gateway
                   spec:
                     connectorRef: dockerhub_petclinic
-                    repo: areger55/petclinic-gateway
+                    repo: areger55/harness-se-lab-dockerhub-rep
                     tags:
-                      - <+codebase.commitSha>
-                      - latest
+                      - gateway-<+codebase.commitSha>
+                      - gateway-latest
                     context: spring-petclinic-api-gateway
                     dockerfile: spring-petclinic-api-gateway/Dockerfile
-                    baseImageConnectorRefs:
-                      - dockerhub_petclinic

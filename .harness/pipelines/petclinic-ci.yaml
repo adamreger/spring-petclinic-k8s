@@ -31,9 +31,11 @@ pipeline:
                     shell: Sh
                     image: maven:3.9-eclipse-temurin-11
                     connectorRef: dockerhub_petclinic
+                    envVariables:
+                      MAVEN_CONFIG: /tmp
                     command: |
-                      chmod +x mvnw
-                      ./mvnw -B -DskipTests clean package
+                      rm -f $HOME/.m2/maven.config || true
+                      ./mvnw -B -q -DskipTests -Dmaven.repo.local=/harness/maven-repo clean package
               - step:
                   type: RunTests
                   name: Unit Tests
@@ -44,7 +46,8 @@ pipeline:
                     args: test
                     image: maven:3.9-eclipse-temurin-11
                     connectorRef: dockerhub_petclinic
-                    # Use the wrapper for consistency
+                    envVariables:
+                      MAVEN_CONFIG: /tmp
                     runOnlySelectedTests: false
                     additionalArgs: "-B"
                     reports:

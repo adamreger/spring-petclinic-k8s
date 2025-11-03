@@ -1,4 +1,4 @@
-FROM eclipse-temurin:8-jre-jammy
+FROM maven:3.9.6-eclipse-temurin-8
 WORKDIR /app
 # copy the built jar from this module's target/
 COPY target/*.jar app.jar

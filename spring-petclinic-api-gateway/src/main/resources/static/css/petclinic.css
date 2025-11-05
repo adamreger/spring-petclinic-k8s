@@ -1,0 +1,388 @@
+/* Custom Petclinic theme converted from LESS to plain CSS */
+
+@font-face {
+  font-family: "varela_roundregular";
+  src: url("../fonts/varela_round-webfont.eot");
+  src: url("../fonts/varela_round-webfont.eot?#iefix") format("embedded-opentype"),
+       url("../fonts/varela_round-webfont.woff") format("woff"),
+       url("../fonts/varela_round-webfont.ttf") format("truetype"),
+       url("../fonts/varela_round-webfont.svg#varela_roundregular") format("svg");
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "montserratregular";
+  src: url("../fonts/montserrat-webfont.eot");
+  src: url("../fonts/montserrat-webfont.eot?#iefix") format("embedded-opentype"),
+       url("../fonts/montserrat-webfont.woff") format("woff"),
+       url("../fonts/montserrat-webfont.ttf") format("truetype"),
+       url("../fonts/montserrat-webfont.svg#montserratregular") format("svg");
+  font-weight: normal;
+  font-style: normal;
+}
+
+body,
+h1,
+h2,
+h3,
+p,
+input {
+  margin: 0;
+  font-weight: 400;
+  font-family: "varela_roundregular", sans-serif;
+  color: #34302d;
+}
+
+body {
+  background-color: #f1f1f1;
+}
+
+a {
+  color: #5fa134;
+}
+
+a:hover,
+a:focus {
+  color: #5fa134;
+}
+
+.navbar {
+  border-top: 4px solid #6db33f;
+  background-color: #34302d;
+  margin-bottom: 0;
+  border-bottom: 0;
+  border-left: 0;
+  border-right: 0;
+}
+
+.navbar a.navbar-brand {
+  background: url("../images/spring-logo-dataflow.png") -1px -1px no-repeat;
+  margin: 12px 0 6px;
+  width: 229px;
+  height: 46px;
+  display: inline-block;
+  text-decoration: none;
+  padding: 0;
+}
+
+.navbar a.navbar-brand span {
+  display: block;
+  width: 229px;
+  height: 46px;
+  background: url("../images/spring-logo-dataflow.png") -1px -48px no-repeat;
+  opacity: 0;
+  transition: opacity 0.12s ease-in-out;
+}
+
+.navbar a:hover.navbar-brand span {
+  opacity: 1;
+}
+
+.navbar li > a,
+.navbar-text {
+  font-family: "montserratregular", sans-serif;
+  text-shadow: none;
+  font-size: 14px;
+  padding: 28px 20px;
+  transition: all 0.15s;
+}
+
+.navbar li > a {
+  text-transform: uppercase;
+}
+
+.navbar .navbar-text {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.navbar li:hover > a {
+  color: #eeeeee;
+  background-color: #6db33f;
+}
+
+.navbar-default .navbar-nav > li > a,
+.navbar-default .navbar-text {
+  color: #f1f1f1;
+}
+
+.navbar-default .navbar-nav > li > a:hover,
+.navbar-default .navbar-nav > li > a:focus,
+.navbar-default .navbar-nav > .active > a,
+.navbar-default .navbar-nav > .active > a:hover,
+.navbar-default .navbar-nav > .active > a:focus {
+  color: #f1f1f1;
+  background-color: #6db33f;
+}
+
+.navbar-default .navbar-toggle {
+  border-width: 0;
+  background-color: transparent;
+}
+
+.navbar-default .navbar-toggle .icon-bar {
+  background-color: #f1f1f1;
+}
+
+.navbar-default .navbar-toggle:hover,
+.navbar-default .navbar-toggle:focus {
+  background-color: transparent;
+}
+
+.navbar-toggle .icon-bar + .icon-bar {
+  margin-top: 3px;
+}
+
+.navbar-toggle .icon-bar {
+  width: 19px;
+  height: 3px;
+}
+
+.btn-default {
+  color: #f1f1f1;
+  background-color: #34302d;
+  border: 2px solid #6db33f;
+  transition: border 0.15s;
+}
+
+.btn-default:hover,
+.btn-default:focus,
+.btn-default:active,
+.btn-default.active,
+.open .dropdown-toggle.btn-default {
+  color: #f1f1f1;
+  background-color: #34302d;
+  border-color: #34302d;
+}
+
+.nav-tabs {
+  border-bottom: 1px solid #34302d;
+}
+
+.nav-tabs > li > a {
+  border-radius: 0;
+}
+
+.nav-tabs > li.active > a,
+.nav-tabs > li.active > a:focus,
+.nav-tabs > li.active > a:hover {
+  color: #f1f1f1;
+  background-color: #34302d;
+  border-color: #34302d;
+}
+
+.nav-tabs > li > a:hover {
+  border-color: #34302d #34302d transparent;
+}
+
+.pagination > li > a,
+.pagination > li > span {
+  color: #34302d;
+}
+
+.pagination > .active > a,
+.pagination > .active > span,
+.pagination > .active > a:focus,
+.pagination > .active > span:focus,
+.pagination > .active > a:hover,
+.pagination > .active > span:hover {
+  background-color: #34302d;
+  border-color: #6db33f;
+  color: #f1f1f1;
+}
+
+.table > thead > tr > th {
+  background-color: #3a3633;
+  color: #f1f1f1;
+}
+
+.table-filter {
+  background-color: #34302d;
+  padding: 9px 12px;
+}
+
+.nav > li > a {
+  color: #838789;
+}
+
+.container .text-muted {
+  margin: 20px 0;
+}
+
+code {
+  font-size: 80%;
+}
+
+.xd-container {
+  margin-top: 40px;
+  margin-bottom: 100px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+h1 {
+  font-size: 24px;
+  line-height: 30px;
+  margin-bottom: 15px;
+  font-family: "montserratregular", sans-serif;
+}
+
+h2 {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 24px;
+  margin-bottom: 10px;
+  font-family: "montserratregular", sans-serif;
+}
+
+h3 {
+  font-size: 16px;
+  line-height: 24px;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.index-page--subtitle {
+  font-size: 16px;
+  line-height: 24px;
+  margin: 0 0 30px;
+}
+
+.form-horizontal button.btn-inverse {
+  margin-left: 32px;
+}
+
+#job-params-modal .modal-dialog {
+  width: 90%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+[ng-cloak].splash {
+  display: block !important;
+}
+
+[ng-cloak] {
+  display: none;
+}
+
+.splash {
+  background: #6db33f;
+  color: #34302d;
+  display: none;
+}
+
+.error-page {
+  margin-top: 100px;
+  text-align: center;
+}
+
+.error-page .error-title {
+  font-size: 24px;
+  line-height: 24px;
+  margin: 30px 0 0;
+}
+
+table td {
+  vertical-align: middle;
+}
+
+table td .progress {
+  margin-bottom: 0;
+}
+
+table td.action-column {
+  width: 1px;
+}
+
+.help-block {
+  color: #9a9896;
+}
+
+.xd-containers {
+  font-size: 15px;
+}
+
+.cluster-view > table td {
+  vertical-align: top;
+}
+
+.cluster-view .label,
+.cluster-view .column-block {
+  display: block;
+}
+
+.cluster-view .input-group-addon {
+  width: 0%;
+}
+
+.cluster-view {
+  margin-bottom: 0;
+}
+
+.deployment-status-deployed {
+  color: #3c763d;
+  background-color: #dff0d8;
+}
+
+.deployment-status-incomplete {
+  color: #8a6d3b;
+  background-color: #fcf8e3;
+}
+
+.deployment-status-failed {
+  color: #a94442;
+  background-color: #f2dede;
+}
+
+.deployment-status-deploying {
+  color: #31708f;
+  background-color: #d9edf7;
+}
+
+.deployment-status-na {
+  color: #fff;
+  background-color: #838789;
+}
+
+@media (max-width: 768px) {
+  .navbar-toggle {
+    position: absolute;
+    z-index: 9999;
+    left: 0;
+    top: 0;
+  }
+
+  .navbar a.navbar-brand {
+    display: block;
+    margin: 0 auto;
+    width: 148px;
+    height: 50px;
+    float: none;
+    background: url("../images/spring-logo-dataflow-mobile.png") 0 center no-repeat;
+  }
+
+  .homepage-billboard .homepage-subtitle {
+    font-size: 21px;
+    line-height: 21px;
+  }
+
+  .navbar a.navbar-brand span {
+    display: none;
+  }
+
+  .navbar {
+    border-top-width: 0;
+  }
+
+  .xd-container {
+    margin-top: 20px;
+    margin-bottom: 30px;
+  }
+
+  .index-page--subtitle {
+    margin-top: 10px;
+    margin-bottom: 30px;
+  }
+}

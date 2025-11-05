@@ -206,7 +206,7 @@ spec:
     spec:
       containers:
         - name: api-gateway
-          image: springcommunity/spring-petclinic-api-gateway:latest
+          image: areger55/harness-se-lab-dockerhub-repo:gateway-latest
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080

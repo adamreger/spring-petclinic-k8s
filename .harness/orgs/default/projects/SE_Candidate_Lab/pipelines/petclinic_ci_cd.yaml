@@ -84,11 +84,6 @@ pipeline:
                       -Dmaven.repo.local=/harness/.m2/repository \
                       -DnvdApiKey=${NVD_API_KEY} \
                       -DskipTests \
-                      org.owasp:dependency-check-maven:${DEP_CHECK_VERSION}:purge
-                      ./mvnw -B \
-                      -Dmaven.repo.local=/harness/.m2/repository \
-                      -DnvdApiKey=${NVD_API_KEY} \
-                      -DskipTests \
                       org.owasp:dependency-check-maven:${DEP_CHECK_VERSION}:check
               - step:
                   type: RunTests

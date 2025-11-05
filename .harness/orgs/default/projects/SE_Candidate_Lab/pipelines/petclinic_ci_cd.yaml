@@ -77,22 +77,29 @@ pipeline:
                     command: |-
                       unset MAVEN_CONFIG
                       export MAVEN_OPTS="-Xms256m -Xmx1024m -XX:MaxMetaspaceSize=384m"
-                      DC_VERSION=12.1.8
+                      DC_VERSION=11.1.1
                       DC_ARCHIVE="dependency-check-${DC_VERSION}-release.zip"
-                      DC_URL="https://github.com/jeremylong/DependencyCheck/releases/download/v${DC_VERSION}/${DC_ARCHIVE}"
-                      echo "Downloading OWASP Dependency-Check CLI ${DC_VERSION} from ${DC_URL}"
-                      if ! command -v curl >/dev/null 2>&1; then
-                        apt-get update && apt-get install -y curl
+                      DC_BASE_PATH="${HOME}/.dependency-check"
+                      DC_BIN="${DC_BASE_PATH}/${DC_VERSION}"
+                      mkdir -p "${DC_BIN}"
+                      if [ ! -d "${DC_BIN}/dependency-check" ]; then
+                        DC_URL="https://github.com/jeremylong/DependencyCheck/releases/download/v${DC_VERSION}/${DC_ARCHIVE}"
+                        echo "Downloading OWASP Dependency-Check CLI ${DC_VERSION} from ${DC_URL}"
+                        if ! command -v curl >/dev/null 2>&1; then
+                          apt-get update && apt-get install -y curl
+                        fi
+                        if ! command -v unzip >/dev/null 2>&1; then
+                          apt-get update && apt-get install -y unzip
+                        fi
+                        rm -rf "${DC_BIN:?}/${DC_ARCHIVE}" "${DC_BIN:?}/dependency-check"
+                        curl -fsSL "${DC_URL}" -o "${DC_BIN}/${DC_ARCHIVE}"
+                        unzip -q "${DC_BIN}/${DC_ARCHIVE}" -d "${DC_BIN}"
+                      else
+                        echo "Reusing cached Dependency-Check CLI ${DC_VERSION}"
                       fi
-                      if ! command -v unzip >/dev/null 2>&1; then
-                        apt-get update && apt-get install -y unzip
-                      fi
-                      rm -rf dependency-check "${DC_ARCHIVE}"
-                      curl -fsSL "${DC_URL}" -o "${DC_ARCHIVE}"
-                      unzip -q "${DC_ARCHIVE}"
-                      DC_HOME="$(pwd)/dependency-check"
+                      DC_HOME="${DC_BIN}/dependency-check"
                       DC_DATA_DIR=$(mktemp -d /tmp/dc-data-XXXXXX)
-                      trap 'rm -rf "${DC_DATA_DIR}" "${DC_HOME}" "${DC_ARCHIVE}"' EXIT
+                      trap 'rm -rf "${DC_DATA_DIR}"' EXIT
                       echo "Running OWASP Dependency-Check CLI ${DC_VERSION}"
                       "${DC_HOME}/bin/dependency-check.sh" \
                         --project "spring-petclinic" \

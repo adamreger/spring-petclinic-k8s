@@ -79,12 +79,17 @@ pipeline:
                       export MAVEN_OPTS="-Xms256m -Xmx1024m -XX:MaxMetaspaceSize=384m"
                       mkdir -p /harness/.m2/repository
                       rm -rf /harness/.m2/repository/org/owasp/dependency-check-data
+                      DC_DATA_DIR=$(mktemp -d /tmp/dc-data-XXXXXX)
+                      trap "rm -rf ${DC_DATA_DIR}" EXIT
                       DEP_CHECK_VERSION=11.1.1
                       echo "Running OWASP Dependency-Check ${DEP_CHECK_VERSION} with Java $(java -version 2>&1 | head -n 1)"
                       ./mvnw -B \
                       -Dmaven.repo.local=/harness/.m2/repository \
                       -DnvdApiKey=${NVD_API_KEY} \
                       -DskipTests \
+                      -Dorg.owasp.dependencycheck.data.directory=${DC_DATA_DIR} \
+                      -DdataDirectory=${DC_DATA_DIR} \
+                      -Dnvd.api.threadCount=1 \
                       org.owasp:dependency-check-maven:${DEP_CHECK_VERSION}:check
               - step:
                   type: RunTests

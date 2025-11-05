@@ -179,6 +179,12 @@ pipeline:
                       - gateway-latest
                     context: spring-petclinic-api-gateway
                     dockerfile: spring-petclinic-api-gateway/Dockerfile
+          caching:
+            enabled: true
+            paths: []
+          buildIntelligence:
+            enabled: false
+        description: ""
     - stage:
         name: Deploy API-Gateway
         identifier: Deploy_to_Dev

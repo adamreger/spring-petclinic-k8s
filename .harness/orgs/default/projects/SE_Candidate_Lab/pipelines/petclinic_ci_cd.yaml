@@ -109,7 +109,7 @@ pipeline:
                         --format "HTML" \
                         --format "JSON" \
                         --nvdApiKey "${NVD_API_KEY}" \
-                        --nvdApiDelay 3500 \
+                        --nvdApiDelay 3500
                       ls -R dependency-check-report
               - step:
                   type: RunTests

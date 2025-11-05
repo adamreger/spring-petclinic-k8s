@@ -59,7 +59,8 @@ pipeline:
                       chmod +x mvnw
                       java -version && ./mvnw -v
                       export MAVEN_OPTS="-Xms512m -Xmx1536m -XX:MaxMetaspaceSize=512m"
-                      ./mvnw -B -Dmaven.repo.local=/harness/maven-repo -DskipTests clean package
+                      mkdir -p /harness/.m2/repository
+                      ./mvnw -B -Dmaven.repo.local=/harness/.m2/repository -DskipTests clean package
               - step:
                   type: Run
                   name: Check Dependencies
@@ -76,8 +77,9 @@ pipeline:
                     command: |-
                       unset MAVEN_CONFIG
                       export MAVEN_OPTS="-Xms256m -Xmx1024m -XX:MaxMetaspaceSize=384m"
+                      mkdir -p /harness/.m2/repository
                       ./mvnw -B \
-                      -Dmaven.repo.local=/harness/maven-repo \
+                      -Dmaven.repo.local=/harness/.m2/repository \
                       -DnvdApiKey=${NVD_API_KEY} \
                       -DskipTests \
                       org.owasp:dependency-check-maven:check
@@ -94,7 +96,7 @@ pipeline:
                     args: test
                     image: maven:3.9.6-eclipse-temurin-8
                     connectorRef: dockerhub_petclinic
-                    additionalArgs: "-B -DnvdApiKey=${NVD_API_KEY} -Dmaven.repo.local=/harness/maven-repo -DargLine='-Xmx1024m -XX:MaxMetaspaceSize=512m' -DforkCount=1"
+                    additionalArgs: "-B -DnvdApiKey=${NVD_API_KEY} -Dmaven.repo.local=/harness/.m2/repository -DargLine='-Xmx1024m -XX:MaxMetaspaceSize=512m' -DforkCount=1"
                     runOnlySelectedTests: false
                     resources:
                       limits:

@@ -77,7 +77,7 @@ pipeline:
                     command: |-
                       unset MAVEN_CONFIG
                       export MAVEN_OPTS="-Xms256m -Xmx1024m -XX:MaxMetaspaceSize=384m"
-                      DC_VERSION=11.1.1
+                      DC_VERSION=12.1.8
                       DC_ARCHIVE="dependency-check-${DC_VERSION}-release.zip"
                       DC_URL="https://github.com/jeremylong/DependencyCheck/releases/download/v${DC_VERSION}/${DC_ARCHIVE}"
                       echo "Downloading OWASP Dependency-Check CLI ${DC_VERSION} from ${DC_URL}"
@@ -96,13 +96,13 @@ pipeline:
                       echo "Running OWASP Dependency-Check CLI ${DC_VERSION}"
                       "${DC_HOME}/bin/dependency-check.sh" \
                         --project "spring-petclinic" \
-                        --scan "spring-petclinic-customers-service" \
+                        --scan "spring-petclinic-api-gateway" \
                         --out "dependency-check-report" \
                         --data "${DC_DATA_DIR}" \
                         --format "HTML" \
+                        --format "JSON" \
                         --nvdApiKey "${NVD_API_KEY}" \
-                        --nvdApiDelay 6000 \
-                        --failOnCVSS 11
+                        --nvdApiDelay 3500 \
                       ls -R dependency-check-report
               - step:
                   type: RunTests

@@ -81,7 +81,7 @@ pipeline:
                       rm -rf /harness/.m2/repository/org/owasp/dependency-check-data
                       DC_DATA_DIR=$(mktemp -d /tmp/dc-data-XXXXXX)
                       trap "rm -rf ${DC_DATA_DIR}" EXIT
-                      DEP_CHECK_VERSION=11.1.1
+                      DEP_CHECK_VERSION=11.2.0
                       echo "Running OWASP Dependency-Check ${DEP_CHECK_VERSION} with Java $(java -version 2>&1 | head -n 1)"
                       ./mvnw -B \
                       -Dmaven.repo.local=/harness/.m2/repository \

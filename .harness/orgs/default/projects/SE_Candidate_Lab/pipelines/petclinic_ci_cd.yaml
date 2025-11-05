@@ -90,6 +90,7 @@ pipeline:
                       -Dorg.owasp.dependencycheck.data.directory=${DC_DATA_DIR} \
                       -DdataDirectory=${DC_DATA_DIR} \
                       -Dnvd.api.threadCount=1 \
+                      -Danalyze.from=1925 \
                       org.owasp:dependency-check-maven:${DEP_CHECK_VERSION}:check
               - step:
                   type: RunTests

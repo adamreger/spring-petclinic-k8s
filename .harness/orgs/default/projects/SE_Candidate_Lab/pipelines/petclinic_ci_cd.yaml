@@ -96,10 +96,7 @@ pipeline:
                         --format "HTML,JSON" \
                         --data "${DC_DATA_DIR}" \
                         --nvdApiKey "${NVD_API_KEY}" \
-                        --nvdApiDelay 6000 \
-                        --failOnCVSS 11 \
-                        --analyzeFromYear 1925 \
-                        --disableArchive
+                        --failOnCVSS 11
                       ls -R dependency-check-report
               - step:
                   type: RunTests

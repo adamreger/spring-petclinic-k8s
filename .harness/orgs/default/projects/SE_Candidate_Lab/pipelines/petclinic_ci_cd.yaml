@@ -78,11 +78,17 @@ pipeline:
                       unset MAVEN_CONFIG
                       export MAVEN_OPTS="-Xms256m -Xmx1024m -XX:MaxMetaspaceSize=384m"
                       mkdir -p /harness/.m2/repository
+                      DEP_CHECK_VERSION=10.0.6
                       ./mvnw -B \
                       -Dmaven.repo.local=/harness/.m2/repository \
                       -DnvdApiKey=${NVD_API_KEY} \
                       -DskipTests \
-                      org.owasp:dependency-check-maven:check
+                      org.owasp:dependency-check-maven:${DEP_CHECK_VERSION}:purge
+                      ./mvnw -B \
+                      -Dmaven.repo.local=/harness/.m2/repository \
+                      -DnvdApiKey=${NVD_API_KEY} \
+                      -DskipTests \
+                      org.owasp:dependency-check-maven:${DEP_CHECK_VERSION}:check
               - step:
                   type: RunTests
                   name: Unit Tests

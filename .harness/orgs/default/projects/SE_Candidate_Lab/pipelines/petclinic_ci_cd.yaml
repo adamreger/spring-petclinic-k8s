@@ -32,6 +32,9 @@ pipeline:
             spec:
               connectorRef: k8s_docker_desktop
               namespace: harness-delegate-ng
+              automountServiceAccountToken: true
+              nodeSelector: {}
+              os: Linux
           execution:
             steps:
               - step:
@@ -107,6 +110,12 @@ pipeline:
                       spec:
                         paths:
                           - target/surefire-reports/*.xml
+          caching:
+            enabled: true
+            paths: []
+          buildIntelligence:
+            enabled: false
+        description: ""
     - stage:
         name: Build Image and Push
         identifier: Buildpack_Image

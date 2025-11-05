@@ -70,7 +70,7 @@ pipeline:
                     condition: <+pipeline.variables.SKIP_DEPCHECK> == "false"
                   spec:
                     connectorRef: dockerhub_petclinic
-                    image: maven:3.9.6-eclipse-temurin-8
+                    image: maven:3.9.6-eclipse-temurin-17
                     shell: Sh
                     envVariables:
                       NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
@@ -78,7 +78,8 @@ pipeline:
                       unset MAVEN_CONFIG
                       export MAVEN_OPTS="-Xms256m -Xmx1024m -XX:MaxMetaspaceSize=384m"
                       mkdir -p /harness/.m2/repository
-                      DEP_CHECK_VERSION=10.0.6
+                      DEP_CHECK_VERSION=11.1.0
+                      echo "Running OWASP Dependency-Check ${DEP_CHECK_VERSION} with Java $(java -version 2>&1 | head -n 1)"
                       ./mvnw -B \
                       -Dmaven.repo.local=/harness/.m2/repository \
                       -DnvdApiKey=${NVD_API_KEY} \

@@ -10,9 +10,9 @@ for example you don't need to use service discovery with
 [Spring Cloud Netflix](https://spring.io/projects/spring-cloud-netflix) since the Kubernetes platform
 already provides one such implementation.
 
-Moreover, container images for the Spring PetClinic are now built using [Cloud Native Buildpacks](https://buildpacks.io).
-You will not find any `Dockerfile` in this repository: the `pack` CLI is used to build secure and
-optimized container images for you.
+Moreover, container images for the Spring PetClinic are now built from the provided `Dockerfile`s
+using the standard Docker CLI. Each service module ships with its own `Dockerfile` under the project
+root.
 
 ## Building this application
 
@@ -24,20 +24,11 @@ $ ./mvnw clean package
 
 Pre-built container images are available, so that you can start deploying this app to your favorite Kubernetes cluster. In case you'd like to build your own images, please follow these instructions.
 
-[Read this guide](https://buildpacks.io/docs/install-pack/) to deploy the `pack` CLI to your workstation.
-
-Many buildpack implementations are available: for best results, use [Paketo buildpacks](https://paketo.io):
-
-```bash
-$ pack set-default-builder gcr.io/paketo-buildpacks/builder:base
-```
-
-You're ready to build container images with no Dockerfile!
-
-Use the provided `Makefile` to build container images:
+[Docker Buildx](https://docs.docker.com/build/buildx/) or any other OCI compliant builder can be used to produce images.
+Use the provided `Makefile` to compile the services and build container images:
 
 ```bash
-$ make all DOCKER_PREFIX=myrepo
+$ make all DOCKER_PREFIX=myrepo IMAGE_TAG=latest
 ```
 
 ## Running this application locally

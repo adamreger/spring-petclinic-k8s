@@ -1,15 +1,23 @@
-DOCKER_PREFIX = alexandreroman
+DOCKER_PREFIX ?= alexandreroman
+IMAGE_TAG ?= latest
+MVN_FLAGS ?= -DskipTests
+
+.PHONY: all api-gateway customers vets visits
 
 all: api-gateway customers vets visits
 
 api-gateway:
-	pack build $(DOCKER_PREFIX)/spring-petclinic-k8s-api-gateway --publish -e BP_MAVEN_BUILT_MODULE=spring-petclinic-api-gateway -e "BP_MAVEN_BUILD_ARGUMENTS=clean package -DskipTests"
+	./mvnw -pl spring-petclinic-api-gateway -am clean package $(MVN_FLAGS)
+	docker build --pull -t $(DOCKER_PREFIX)/spring-petclinic-k8s-api-gateway:$(IMAGE_TAG) spring-petclinic-api-gateway
 
 customers:
-	pack build $(DOCKER_PREFIX)/spring-petclinic-k8s-customers --publish -e BP_MAVEN_BUILT_MODULE=spring-petclinic-customers-service -e "BP_MAVEN_BUILD_ARGUMENTS=clean package -DskipTests"
+	./mvnw -pl spring-petclinic-customers-service -am clean package $(MVN_FLAGS)
+	docker build --pull -t $(DOCKER_PREFIX)/spring-petclinic-k8s-customers:$(IMAGE_TAG) spring-petclinic-customers-service
 
 vets:
-	pack build $(DOCKER_PREFIX)/spring-petclinic-k8s-vets --publish -e BP_MAVEN_BUILT_MODULE=spring-petclinic-vets-service -e "BP_MAVEN_BUILD_ARGUMENTS=clean package -DskipTests"
+	./mvnw -pl spring-petclinic-vets-service -am clean package $(MVN_FLAGS)
+	docker build --pull -t $(DOCKER_PREFIX)/spring-petclinic-k8s-vets:$(IMAGE_TAG) spring-petclinic-vets-service
 
 visits:
-	pack build $(DOCKER_PREFIX)/spring-petclinic-k8s-visits --publish -e BP_MAVEN_BUILT_MODULE=spring-petclinic-visits-service -e "BP_MAVEN_BUILD_ARGUMENTS=clean package -DskipTests"
+	./mvnw -pl spring-petclinic-visits-service -am clean package $(MVN_FLAGS)
+	docker build --pull -t $(DOCKER_PREFIX)/spring-petclinic-k8s-visits:$(IMAGE_TAG) spring-petclinic-visits-service

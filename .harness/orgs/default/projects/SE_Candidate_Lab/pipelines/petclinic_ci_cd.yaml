@@ -1,0 +1,219 @@
+pipeline:
+  name: petclinic-ci-cd-combined
+  identifier: petclinic_ci_cd_combined
+  projectIdentifier: SE_Candidate_Lab
+  orgIdentifier: default
+  tags: {}
+  properties:
+    ci:
+      codebase:
+        connectorRef: github_petclinic
+        repoName: adamreger/spring-petclinic-k8s
+        build: <+input>
+  variables:
+    - name: SKIP_DEPCHECK
+      type: String
+      value: "true"
+    - name: SKIP_BUILD_TEST
+      type: String
+      value: "true"
+    - name: CANARY_POD_COUNT
+      type: String
+      value: "1"
+  stages:
+    - stage:
+        name: Build and Test
+        identifier: Build_Test
+        type: CI
+        spec:
+          cloneCodebase: true
+          infrastructure:
+            type: KubernetesDirect
+            spec:
+              connectorRef: k8s_docker_desktop
+              namespace: harness-ci
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Maven Build
+                  identifier: mvn_build
+                  spec:
+                    shell: Sh
+                    image: maven:3.9-eclipse-temurin-11
+                    connectorRef: dockerhub_petclinic
+                    envVariables:
+                      MAVEN_CONFIG: /tmp
+                    command: |
+                      rm -f $HOME/.m2/maven.config || true
+                      ./mvnw -B -q -DskipTests -Dmaven.repo.local=/harness/maven-repo clean package
+              - step:
+                  type: RunTests
+                  name: Unit Tests
+                  identifier: unit_tests
+                  spec:
+                    language: Java
+                    buildTool: Maven
+                    args: test
+                    image: maven:3.9-eclipse-temurin-11
+                    connectorRef: dockerhub_petclinic
+                    envVariables:
+                      MAVEN_CONFIG: /tmp
+                    runOnlySelectedTests: false
+                    additionalArgs: "-B"
+                    reports:
+                      type: JUnit
+                      spec:
+                        paths:
+                          - target/surefire-reports/*.xml
+    - stage:
+        name: Build Image and Push
+        identifier: Buildpack_Image
+        type: CI
+        spec:
+          cloneCodebase: true
+          infrastructure:
+            type: KubernetesDirect
+            spec:
+              connectorRef: k8s_docker_desktop
+              namespace: harness-ci
+          execution:
+            steps:
+              - step:
+                  type: BuildAndPushDockerRegistry
+                  name: Build and Push
+                  identifier: build_push_pack
+                  spec:
+                    connectorRef: dockerhub_petclinic
+                    repo: areger55/harness-se-lab-dockerhub-repo
+                    tags:
+                      - <+codebase.commitSha>
+                      - latest
+                    buildTool: Buildpacks
+                    buildpacks:
+                      builder: paketobuildpacks/builder:base
+                      runImage: paketobuildpacks/run:base-cnb
+                      env:
+                        BP_JVM_VERSION: "11"
+    - stage:
+        name: Deploy API-Gateway
+        identifier: Deploy_to_Dev
+        description: ""
+        type: Deployment
+        spec:
+          deploymentType: Kubernetes
+          service:
+            serviceRef: apigatewayservice
+            failureStrategies:
+              - onFailure:
+                  errors:
+                    - AllErrors
+                  action:
+                    type: PipelineRollback
+          environment:
+            environmentRef: dev
+            deployToAll: false
+            infrastructureDefinitions:
+              - identifier: harnessk8sinfradev
+            failureStrategies:
+              - onFailure:
+                  errors:
+                    - AllErrors
+                  action:
+                    type: PipelineRollback
+          execution:
+            steps:
+              - stepGroup:
+                  name: Canary Deployment
+                  identifier: canaryDeployment
+                  steps:
+                    - step:
+                        name: Canary Deployment
+                        identifier: canaryDeployment
+                        type: K8sCanaryDeploy
+                        timeout: 10m
+                        spec:
+                          instanceSelection:
+                            type: Count
+                            spec:
+                              count: <+pipeline.variables.CANARY_POD_COUNT>
+                          skipDryRun: false
+                    - step:
+                        name: Observe Canary
+                        identifier: observeCanary
+                        type: Wait
+                        timeout: 10m
+                        spec:
+                          duration: 2m
+                    - step:
+                        name: Check Canary Health
+                        identifier: checkCanaryHealth
+                        type: ShellScript
+                        timeout: 10m
+                        spec:
+                          shell: Bash
+                          onDelegate: true
+                          source:
+                            type: Inline
+                            spec:
+                              script: |
+                                set -euo pipefail
+                                echo "Checking canary rollout status..."
+                                status=0
+                                if ! kubectl rollout status deployment/api-gateway-canary --namespace petclinic --timeout=180s; then
+                                  status=$?
+                                  echo "Canary deployment did not become ready within timeout (exit code ${status})."
+                                fi
+                                echo "Listing canary pods for quick inspection:"
+                                kubectl get pods --namespace petclinic -l harness.io/canary=true -o wide
+                                echo "Fetching recent logs from canary pod(s) for diagnostics..."
+                                mapfile -t pods < <(kubectl get pods --namespace petclinic -l harness.io/canary=true -o name)
+                                if [ ${#pods[@]} -eq 0 ]; then
+                                  echo "No canary pods found to fetch logs from."
+                                else
+                                  for pod in "${pods[@]}"; do
+                                    echo "----- Logs for ${pod} -----"
+                                    kubectl logs --namespace petclinic "${pod}" --tail=200 || true
+                                    echo "----- End logs for ${pod} -----"
+                                  done
+                                fi
+                                exit ${status}
+                          environmentVariables: []
+                          outputVariables: []
+                    - step:
+                        name: Canary Delete
+                        identifier: canaryDelete
+                        type: K8sCanaryDelete
+                        timeout: 10m
+                        spec: {}
+              - stepGroup:
+                  name: Primary Deployment
+                  identifier: primaryDeployment
+                  steps:
+                    - step:
+                        name: Rolling Deployment
+                        identifier: rollingDeployment
+                        type: K8sRollingDeploy
+                        timeout: 10m
+                        spec:
+                          skipDryRun: false
+            rollbackSteps:
+              - step:
+                  name: Canary Delete
+                  identifier: rollbackCanaryDelete
+                  type: K8sCanaryDelete
+                  timeout: 10m
+                  spec: {}
+              - step:
+                  name: Rolling Rollback
+                  identifier: rollingRollback
+                  type: K8sRollingRollback
+                  timeout: 10m
+                  spec: {}
+        tags: {}
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: StageRollback

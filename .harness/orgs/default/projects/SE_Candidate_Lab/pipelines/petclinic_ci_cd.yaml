@@ -242,22 +242,91 @@ pipeline:
                             spec:
                               script: |
                                 set -euo pipefail
+
+                                SA_DIR="/var/run/secrets/kubernetes.io/serviceaccount"
+                                cleanup_kubeconfig=""
+
+                                cleanup() {
+                                  if [ -n "${cleanup_kubeconfig:-}" ] && [ -f "${cleanup_kubeconfig}" ]; then
+                                    rm -f "${cleanup_kubeconfig}"
+                                  fi
+                                }
+                                trap cleanup EXIT
+
+                                ensure_kubeconfig() {
+                                  if [ -n "${HARNESS_KUBE_CONFIG_PATH:-}" ] && [ -f "${HARNESS_KUBE_CONFIG_PATH}" ]; then
+                                    export KUBECONFIG="${HARNESS_KUBE_CONFIG_PATH}"
+                                    return 0
+                                  fi
+                                  if [ -n "${HARNESS_KUBECONFIG_PATH:-}" ] && [ -f "${HARNESS_KUBECONFIG_PATH}" ]; then
+                                    export KUBECONFIG="${HARNESS_KUBECONFIG_PATH}"
+                                    return 0
+                                  fi
+                                  if [ -n "${KUBECONFIG:-}" ] && [ -f "${KUBECONFIG}" ]; then
+                                    return 0
+                                  fi
+                                  if [ -n "${HARNESS_KUBE_CONFIG_BASE64:-}" ]; then
+                                    cleanup_kubeconfig="$(mktemp)"
+                                    printf '%s' "${HARNESS_KUBE_CONFIG_BASE64}" | base64 -d > "${cleanup_kubeconfig}"
+                                    export KUBECONFIG="${cleanup_kubeconfig}"
+                                    return 0
+                                  fi
+                                  if [ -n "${HARNESS_KUBECONFIG_BASE64:-}" ]; then
+                                    cleanup_kubeconfig="$(mktemp)"
+                                    printf '%s' "${HARNESS_KUBECONFIG_BASE64}" | base64 -d > "${cleanup_kubeconfig}"
+                                    export KUBECONFIG="${cleanup_kubeconfig}"
+                                    return 0
+                                  fi
+                                  if [ -f "${SA_DIR}/token" ] && [ -f "${SA_DIR}/ca.crt" ] && [ -n "${KUBERNETES_SERVICE_HOST:-}" ]; then
+                                    cleanup_kubeconfig="$(mktemp)"
+                                    sa_token="$(tr -d '\n' < "${SA_DIR}/token")"
+                                    cat > "${cleanup_kubeconfig}" <<EOF
+apiVersion: v1
+kind: Config
+clusters:
+- cluster:
+    certificate-authority: ${SA_DIR}/ca.crt
+    server: https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT:-443}
+  name: in-cluster
+contexts:
+- context:
+    cluster: in-cluster
+    namespace: petclinic
+    user: in-cluster
+  name: in-cluster
+current-context: in-cluster
+users:
+- name: in-cluster
+  user:
+    token: ${sa_token}
+EOF
+                                    export KUBECONFIG="${cleanup_kubeconfig}"
+                                    return 0
+                                  fi
+                                  echo "Unable to determine kubeconfig for kubectl access." >&2
+                                  return 1
+                                }
+
+                                ensure_kubeconfig
+
+                                namespace="petclinic"
+
                                 echo "Checking canary rollout status..."
                                 status=0
-                                if ! kubectl rollout status deployment/api-gateway-canary --namespace petclinic --timeout=180s; then
+                                if ! kubectl rollout status deployment/api-gateway-canary --namespace "${namespace}" --timeout=180s; then
                                   status=$?
                                   echo "Canary deployment did not become ready within timeout (exit code ${status})."
                                 fi
                                 echo "Listing canary pods for quick inspection:"
-                                kubectl get pods --namespace petclinic -l harness.io/canary=true -o wide
+                                kubectl get pods --namespace "${namespace}" -l harness.io/canary=true -o wide
                                 echo "Fetching recent logs from canary pod(s) for diagnostics..."
-                                mapfile -t pods < <(kubectl get pods --namespace petclinic -l harness.io/canary=true -o name)
+                                mapfile -t pods < <(kubectl get pods --namespace "${namespace}" -l harness.io/canary=true -o name)
                                 if [ ${#pods[@]} -eq 0 ]; then
                                   echo "No canary pods found to fetch logs from."
                                 else
                                   for pod in "${pods[@]}"; do
                                     echo "----- Logs for ${pod} -----"
-                                    kubectl logs --namespace petclinic "${pod}" --tail=200 || true
+                                    kubectl logs --namespace "${namespace}" "${pod}" --tail=200 || true
                                     echo "----- End logs for ${pod} -----"
                                   done
                                 fi

@@ -101,6 +101,7 @@ pipeline:
                       DC_DATA_DIR=$(mktemp -d /tmp/dc-data-XXXXXX)
                       trap 'rm -rf "${DC_DATA_DIR}"' EXIT
                       echo "Running OWASP Dependency-Check CLI ${DC_VERSION}"
+                      mkdir -p dependency-check-report
                       "${DC_HOME}/bin/dependency-check.sh" \
                         --project "spring-petclinic" \
                         --scan "spring-petclinic-api-gateway" \

@@ -34,12 +34,22 @@ spec:
           env:
             # If the gateway needs explicit downstream URLs, set them here.
             # Remove if your build already auto-discovers by service DNS names.
+            - name: APP_CUSTOMERS_URI
+              value: "http://customers.petclinic.svc.cluster.local:8080"
+            - name: APP_VETS_URI
+              value: "http://vets.petclinic.svc.cluster.local:8080"
+            - name: APP_VISITS_URI
+              value: "http://visits.petclinic.svc.cluster.local:8080"
             - name: CUSTOMERS_SERVICE_URL
               value: "http://customers.petclinic.svc.cluster.local:8080"
             - name: VETS_SERVICE_URL
               value: "http://vets.petclinic.svc.cluster.local:8080"
             - name: VISITS_SERVICE_URL
               value: "http://visits.petclinic.svc.cluster.local:8080"
+            - name: SERVER_PORT
+              value: "8080"
+            - name: SPRING_PROFILES_ACTIVE
+              value: "kubernetes"
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness

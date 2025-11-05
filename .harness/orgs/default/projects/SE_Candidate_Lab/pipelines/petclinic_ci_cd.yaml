@@ -13,10 +13,10 @@ pipeline:
   variables:
     - name: SKIP_DEPCHECK
       type: String
-      value: <+input>
+      value: <+input>.default(true).selectOneFrom(true,false)
     - name: SKIP_BUILD_TEST
       type: String
-      value: <+input>
+      value: <+input>.default(true).selectOneFrom(true,false)
     - name: CANARY_POD_COUNT
       type: String
       value: "1"

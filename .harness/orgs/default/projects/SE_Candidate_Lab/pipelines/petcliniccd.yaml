@@ -80,11 +80,27 @@ pipeline:
                             type: Inline
                             spec:
                               script: |
-                                set -eo pipefail
+                                set -euo pipefail
                                 echo "Checking canary rollout status..."
-                                kubectl rollout status deployment/api-gateway-canary --namespace petclinic --timeout=180s
+                                status=0
+                                if ! kubectl rollout status deployment/api-gateway-canary --namespace petclinic --timeout=180s; then
+                                  status=$?
+                                  echo "Canary deployment did not become ready within timeout (exit code ${status})."
+                                fi
                                 echo "Listing canary pods for quick inspection:"
                                 kubectl get pods --namespace petclinic -l harness.io/canary=true -o wide
+                                echo "Fetching recent logs from canary pod(s) for diagnostics..."
+                                mapfile -t pods < <(kubectl get pods --namespace petclinic -l harness.io/canary=true -o name)
+                                if [ ${#pods[@]} -eq 0 ]; then
+                                  echo "No canary pods found to fetch logs from."
+                                else
+                                  for pod in "${pods[@]}"; do
+                                    echo "----- Logs for ${pod} -----"
+                                    kubectl logs --namespace petclinic "${pod}" --tail=200 || true
+                                    echo "----- End logs for ${pod} -----"
+                                  done
+                                fi
+                                exit ${status}
                           environmentVariables: []
                           outputVariables: []
                     - step:

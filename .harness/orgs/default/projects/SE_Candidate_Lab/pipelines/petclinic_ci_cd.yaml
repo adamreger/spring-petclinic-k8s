@@ -97,7 +97,7 @@ pipeline:
                         --data "${DC_DATA_DIR}" \
                         --nvdApiKey "${NVD_API_KEY}" \
                         --nvdApiDelay 6000 \
-                        --failOnError false \
+                        --failOnCVSS 11 \
                         --analyzeFromYear 1925 \
                         --disableArchive
                       ls -R dependency-check-report

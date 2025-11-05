@@ -78,7 +78,8 @@ pipeline:
                       unset MAVEN_CONFIG
                       export MAVEN_OPTS="-Xms256m -Xmx1024m -XX:MaxMetaspaceSize=384m"
                       mkdir -p /harness/.m2/repository
-                      DEP_CHECK_VERSION=11.0.0
+                      rm -rf /harness/.m2/repository/org/owasp/dependency-check-data
+                      DEP_CHECK_VERSION=11.1.0
                       echo "Running OWASP Dependency-Check ${DEP_CHECK_VERSION} with Java $(java -version 2>&1 | head -n 1)"
                       ./mvnw -B \
                       -Dmaven.repo.local=/harness/.m2/repository \

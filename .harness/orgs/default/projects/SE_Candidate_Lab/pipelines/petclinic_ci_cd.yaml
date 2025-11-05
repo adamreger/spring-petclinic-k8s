@@ -77,22 +77,30 @@ pipeline:
                     command: |-
                       unset MAVEN_CONFIG
                       export MAVEN_OPTS="-Xms256m -Xmx1024m -XX:MaxMetaspaceSize=384m"
-                      mkdir -p /harness/.m2/repository
-                      rm -rf /harness/.m2/repository/org/owasp/dependency-check-data
+                      DC_VERSION=11.0.0
+                      DC_ARCHIVE="dependency-check-${DC_VERSION}-release.zip"
+                      DC_URL="https://github.com/jeremylong/DependencyCheck/releases/download/v${DC_VERSION}/${DC_ARCHIVE}"
+                      echo "Downloading OWASP Dependency-Check CLI ${DC_VERSION} from ${DC_URL}"
+                      command -v curl >/dev/null 2>&1 || (apt-get update && apt-get install -y curl)
+                      command -v unzip >/dev/null 2>&1 || (apt-get update && apt-get install -y unzip)
+                      curl -sSL "${DC_URL}" -o "${DC_ARCHIVE}"
+                      unzip -q "${DC_ARCHIVE}"
+                      DC_HOME="$(pwd)/dependency-check"
                       DC_DATA_DIR=$(mktemp -d /tmp/dc-data-XXXXXX)
-                      trap "rm -rf ${DC_DATA_DIR}" EXIT
-                      DEP_CHECK_VERSION=11.0.0
-                      echo "Running OWASP Dependency-Check ${DEP_CHECK_VERSION} with Java $(java -version 2>&1 | head -n 1)"
-                      ./mvnw -B \
-                      -Dmaven.repo.local=/harness/.m2/repository \
-                      -DnvdApiKey=${NVD_API_KEY} \
-                      -DskipTests \
-                      -Dorg.owasp.dependencycheck.data.directory=${DC_DATA_DIR} \
-                      -DdataDirectory=${DC_DATA_DIR} \
-                      -Dnvd.api.threadCount=1 \
-                      -Danalyze.from=1925 \
-                      -DdependencyCheck.failOnError=false \
-                      org.owasp:dependency-check-maven:${DEP_CHECK_VERSION}:check
+                      trap "rm -rf ${DC_DATA_DIR} ${DC_HOME} ${DC_ARCHIVE}" EXIT
+                      echo "Running OWASP Dependency-Check CLI ${DC_VERSION}"
+                      "${DC_HOME}/bin/dependency-check.sh" \
+                        --project "spring-petclinic" \
+                        --scan "spring-petclinic-customers-service" \
+                        --out "dependency-check-report" \
+                        --format "HTML,JSON" \
+                        --data "${DC_DATA_DIR}" \
+                        --nvdApiKey "${NVD_API_KEY}" \
+                        --nvdApiDelay 6000 \
+                        --failOnError false \
+                        --analyzeFromYear 1925 \
+                        --disableArchive
+                      ls -R dependency-check-report
               - step:
                   type: RunTests
                   name: Unit Tests
@@ -106,7 +114,7 @@ pipeline:
                     args: test
                     image: maven:3.9.6-eclipse-temurin-8
                     connectorRef: dockerhub_petclinic
-                    additionalArgs: "-B -DnvdApiKey=${NVD_API_KEY} -Dmaven.repo.local=/harness/.m2/repository -DargLine='-Xmx1024m -XX:MaxMetaspaceSize=512m' -DforkCount=1"
+                    additionalArgs: "-B -Dmaven.repo.local=/harness/.m2/repository -DargLine='-Xmx1024m -XX:MaxMetaspaceSize=512m' -DforkCount=1"
                     runOnlySelectedTests: false
                     resources:
                       limits:

@@ -14,6 +14,9 @@ pipeline:
     - name: SKIP_BUILD_TEST
       type: String
       value: "true"
+    - name: CANARY_POD_COUNT
+      type: String
+      value: "1"
   stages:
     - stage:
         name: Deploy API-Gateway
@@ -56,8 +59,34 @@ pipeline:
                           instanceSelection:
                             type: Count
                             spec:
-                              count: 1
+                              count: <+pipeline.variables.CANARY_POD_COUNT>
                           skipDryRun: false
+                    - step:
+                        name: Observe Canary
+                        identifier: observeCanary
+                        type: Wait
+                        timeout: 10m
+                        spec:
+                          duration: 2m
+                    - step:
+                        name: Check Canary Health
+                        identifier: checkCanaryHealth
+                        type: ShellScript
+                        timeout: 10m
+                        spec:
+                          shell: Bash
+                          onDelegate: true
+                          source:
+                            type: Inline
+                            spec:
+                              script: |
+                                set -eo pipefail
+                                echo "Checking canary rollout status..."
+                                kubectl rollout status deployment/api-gateway-canary --namespace petclinic --timeout=180s
+                                echo "Listing canary pods for quick inspection:"
+                                kubectl get pods --namespace petclinic -l harness.io/canary=true -o wide
+                          environmentVariables: []
+                          outputVariables: []
                     - step:
                         name: Canary Delete
                         identifier: canaryDelete

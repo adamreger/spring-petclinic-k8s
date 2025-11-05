@@ -116,7 +116,7 @@ pipeline:
             enabled: true
             paths: []
           buildIntelligence:
-            enabled: false
+            enabled: true
         description: ""
     - stage:
         name: Build Image and Push
@@ -183,7 +183,7 @@ pipeline:
             enabled: true
             paths: []
           buildIntelligence:
-            enabled: false
+            enabled: true
         description: ""
     - stage:
         name: Deploy API-Gateway

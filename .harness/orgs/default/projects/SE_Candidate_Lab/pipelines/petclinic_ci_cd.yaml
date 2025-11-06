@@ -1,5 +1,5 @@
 pipeline:
-  name: petclinic-dev
+  name: petclinic-ci-cd
   identifier: petclinic_ci_cd
   projectIdentifier: SE_Candidate_Lab
   orgIdentifier: default

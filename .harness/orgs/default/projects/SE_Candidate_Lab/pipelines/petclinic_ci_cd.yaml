@@ -77,7 +77,7 @@ pipeline:
                     command: |-
                       unset MAVEN_CONFIG
                       export MAVEN_OPTS="-Xms256m -Xmx1024m -XX:MaxMetaspaceSize=384m"
-                      DC_VERSION=11.2.1
+                      DC_VERSION=11.1.1
                       DC_ARCHIVE="dependency-check-${DC_VERSION}-release.zip"
                       DC_BASE_PATH="${HOME}/.dependency-check"
                       DC_BIN="${DC_BASE_PATH}/${DC_VERSION}"
@@ -85,11 +85,16 @@ pipeline:
                       if [ ! -d "${DC_BIN}/dependency-check" ]; then
                         DC_URL="https://github.com/jeremylong/DependencyCheck/releases/download/v${DC_VERSION}/${DC_ARCHIVE}"
                         echo "Downloading OWASP Dependency-Check CLI ${DC_VERSION} from ${DC_URL}"
+                        APT_UPDATED=false
                         if ! command -v curl >/dev/null 2>&1; then
                           apt-get update && apt-get install -y curl
+                          APT_UPDATED=true
                         fi
                         if ! command -v unzip >/dev/null 2>&1; then
-                          apt-get update && apt-get install -y unzip
+                          if [ "${APT_UPDATED}" = "false" ]; then
+                            apt-get update
+                          fi
+                          apt-get install -y unzip
                         fi
                         rm -rf "${DC_BIN:?}/${DC_ARCHIVE}" "${DC_BIN:?}/dependency-check"
                         curl -fsSL "${DC_URL}" -o "${DC_BIN}/${DC_ARCHIVE}"
@@ -109,10 +114,8 @@ pipeline:
                         --data "${DC_DATA_DIR}" \
                         --format "HTML" \
                         --format "JSON" \
-                        --nvdApiKey "${NVD_API_KEY}" \
-                        --nvdApiDelay 3500 \
-                        --nvdApiThreadCount 1 \
-                        --cveValidForHours 168
+                        --noupdate \
+                        --failOnCVSS 11
                       ls -R dependency-check-report
               - step:
                   type: RunTests

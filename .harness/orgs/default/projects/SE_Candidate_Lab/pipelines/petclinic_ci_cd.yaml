@@ -116,7 +116,6 @@ pipeline:
                         --format "JSON" \
                         --nvdApiKey "${NVD_API_KEY}" \
                         --nvdApiDelay 3500 \
-                        --nvdApiThreadCount 1 \
                         --failOnCVSS 11
                       ls -R dependency-check-report
               - step:

@@ -15,12 +15,14 @@ template:
           identifier: PreDeployApproval
           when:
             stageStatus: Success
-            condition: <+input>
+            condition: <+inputs.envRef> == "prod"
           spec:
             approvalMessage: Approve deploying <+inputs.serviceRef> to <+inputs.envRef>?
             includePipelineExecutionHistory: true
             approvers:
-              userGroups: <+input>
+              userGroups:
+                - _ORG_PROD_DEPLOYERS_
+                - _ORG_SRE_ONCALL_
             timeout: 1h
             approvalCriteria:
               type: Criteria
@@ -62,8 +64,8 @@ template:
               spec:
                 script: |
                   set -euo pipefail
-                  ns="<+inputs.namespace>"
-                  app="<+inputs.appName>"     # pass in plain app name, e.g., api-gateway
+                  ns="<+infra.namespace>"
+                  app="<+inputs.appName>"
                   echo "Checking rollout for ${app}-canary in ${ns}..."
                   status=0
                   if ! kubectl rollout status "deployment/${app}-canary" --namespace "${ns}" --timeout=180s; then
@@ -119,9 +121,6 @@ template:
         type: String
         value: <+input>
       - name: envRef
-        type: String
-        value: <+input>
-      - name: namespace
         type: String
         value: <+input>
       - name: appName

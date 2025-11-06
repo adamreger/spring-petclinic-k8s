@@ -77,7 +77,7 @@ pipeline:
                     command: |-
                       unset MAVEN_CONFIG
                       export MAVEN_OPTS="-Xms256m -Xmx1024m -XX:MaxMetaspaceSize=384m"
-                      DC_VERSION=12.2.0
+                      DC_VERSION=12.0.2
                       DC_ARCHIVE="dependency-check-cli-${DC_VERSION}-release.zip"
                       DC_BASE_PATH="${HOME}/.dependency-check"
                       DC_BIN="${DC_BASE_PATH}/${DC_VERSION}"
@@ -104,12 +104,15 @@ pipeline:
                       fi
                       DC_HOME="${DC_BIN}/dependency-check"
                       DC_DATA_DIR="${DC_BASE_PATH}/data"
+                      rm -rf "${DC_DATA_DIR}"
                       mkdir -p "${DC_DATA_DIR}"
-                      if [ -d "${DC_DATA_DIR}" ] && [ "$(ls -A "${DC_DATA_DIR}")" ]; then
-                        "${DC_HOME}/bin/dependency-check.sh" \
-                          --data "${DC_DATA_DIR}" \
-                          --purge >/dev/null 2>&1 || true
-                      fi
+                      echo "Updating vulnerability database"
+                      "${DC_HOME}/bin/dependency-check.sh" \
+                        --data "${DC_DATA_DIR}" \
+                        --updateonly \
+                        --nvdApiKey "${NVD_API_KEY}" \
+                        --nvdApiDelay 4000 \
+                        --nvdApiThreadCount 1
                       echo "Running OWASP Dependency-Check CLI ${DC_VERSION}"
                       mkdir -p dependency-check-report
                       "${DC_HOME}/bin/dependency-check.sh" \
@@ -119,10 +122,9 @@ pipeline:
                         --data "${DC_DATA_DIR}" \
                         --format "HTML" \
                         --format "JSON" \
-                        --nvdApiKey "${NVD_API_KEY}" \
-                        --nvdApiDelay 3500 \
+                        --noupdate \
                         --failOnCVSS 11
-                      ls -R dependency-check-report
+                      echo "Dependency-Check reports generated under dependency-check-report/"
               - step:
                   type: RunTests
                   name: Unit Tests

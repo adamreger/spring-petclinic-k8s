@@ -77,13 +77,13 @@ pipeline:
                     command: |-
                       unset MAVEN_CONFIG
                       export MAVEN_OPTS="-Xms256m -Xmx1024m -XX:MaxMetaspaceSize=384m"
-                      DC_VERSION=11.1.1
-                      DC_ARCHIVE="dependency-check-${DC_VERSION}-release.zip"
+                      DC_VERSION=12.0.2
+                      DC_ARCHIVE="dependency-check-cli-${DC_VERSION}-release.zip"
                       DC_BASE_PATH="${HOME}/.dependency-check"
                       DC_BIN="${DC_BASE_PATH}/${DC_VERSION}"
                       mkdir -p "${DC_BIN}"
                       if [ ! -d "${DC_BIN}/dependency-check" ]; then
-                        DC_URL="https://github.com/jeremylong/DependencyCheck/releases/download/v${DC_VERSION}/${DC_ARCHIVE}"
+                        DC_URL="https://repo1.maven.org/maven2/org/owasp/dependency-check-cli/${DC_VERSION}/${DC_ARCHIVE}"
                         echo "Downloading OWASP Dependency-Check CLI ${DC_VERSION} from ${DC_URL}"
                         APT_UPDATED=false
                         if ! command -v curl >/dev/null 2>&1; then
@@ -103,7 +103,7 @@ pipeline:
                         echo "Reusing cached Dependency-Check CLI ${DC_VERSION}"
                       fi
                       DC_HOME="${DC_BIN}/dependency-check"
-                      DC_DATA_DIR="${DC_BIN}/data"
+                      DC_DATA_DIR="${DC_BASE_PATH}/data-${DC_VERSION}"
                       mkdir -p "${DC_DATA_DIR}"
                       echo "Running OWASP Dependency-Check CLI ${DC_VERSION}"
                       mkdir -p dependency-check-report
@@ -114,7 +114,9 @@ pipeline:
                         --data "${DC_DATA_DIR}" \
                         --format "HTML" \
                         --format "JSON" \
-                        --noupdate \
+                        --nvdApiKey "${NVD_API_KEY}" \
+                        --nvdApiDelay 3500 \
+                        --nvdApiThreadCount 1 \
                         --failOnCVSS 11
                       ls -R dependency-check-report
               - step:

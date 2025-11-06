@@ -13,7 +13,7 @@ pipeline:
   variables:
     - name: SKIP_DEPCHECK
       type: String
-      value: <+input>.default(false).selectOneFrom(true,false)
+      value: <+input>.default(true).selectOneFrom(true,false)
     - name: SKIP_BUILD_TEST
       type: String
       value: <+input>.default(false).selectOneFrom(true,false)
@@ -124,85 +124,53 @@ pipeline:
 #                        --noupdate \
 #                        --failOnCVSS 11
 #                      echo "Dependency-Check reports generated under dependency-check-report/"
+#              - step:
+#                  type: Run
+#                  name: OWASP Dependency Check
+#                  identifier: owasp_dependency_check
+#                  when:
+#                    stageStatus: Success
+#                    condition: <+pipeline.variables.SKIP_DEPCHECK> == "false"
+#                  spec:
+#                    connectorRef: dockerhub_petclinic
+#                    image: maven:3.9.6-eclipse-temurin-17
+#                    shell: Sh
+#                    envVariables:
+#                      NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
+#                    resources:
+#                      limits:
+#                        memory: 3Gi
+#                        cpu: "2"
+#                      requests:
+#                        memory: 1Gi
+#                        cpu: "1"
+#                    command: |
+#                      # Clean up any previously cached plugin artifacts to avoid version conflicts
+#                      rm -rf /harness/.m2/repository/org/owasp/dependency-check-maven/
+#                      
+#                      # Run OWASP Dependency Check with Java 17 compatible settings
+#                      mvn -B -Dmaven.repo.local=/harness/.m2/repository \
+#                        org.owasp:dependency-check-maven:check \
+#                        -DfailBuildOnCVSS=7 \
+#                        -Dformat=ALL \
+#                        -DprettyPrint=true \
+#                        -DnvdApiKey=${NVD_API_KEY} \
+#                        -DskipSystemScope=false
+#                      
+#                      # Check if vulnerabilities were found
+#                      if [ -f target/dependency-check-report.html ]; then
+#                        echo "Dependency check report generated successfully"
+#                        echo "Report location: target/dependency-check-report.html"
+#                      else
+#                        echo "Warning: Report was not generated"
+#                      fi
+#                    failureStrategies:
+#                      - onFailure:
+#                          errors:
+#                            - AllErrors
+#                          action:
+#                            type: MarkAsSuccess
               - step:
-                  type: Run
-                  name: OWASP Dependency Check
-                  identifier: owasp_dependency_check
-                  when:
-                    stageStatus: Success
-                    condition: <+pipeline.variables.SKIP_DEPCHECK> == "false"
-                  spec:
-                    connectorRef: dockerhub_petclinic
-                    image: maven:3.9.6-eclipse-temurin-17
-                    shell: Sh
-                    envVariables:
-                      NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
-                    resources:
-                      limits:
-                        memory: 3Gi
-                        cpu: "2"
-                      requests:
-                        memory: 1Gi
-                        cpu: "1"
-                    command: |
-                      # Clean up any previously cached plugin artifacts to avoid version conflicts
-                      rm -rf /harness/.m2/repository/org/owasp/dependency-check-maven/
-                      
-                      # Run OWASP Dependency Check with Java 17 compatible settings
-                      mvn -B -Dmaven.repo.local=/harness/.m2/repository \
-                        org.owasp:dependency-check-maven:check \
-                        -DfailBuildOnCVSS=7 \
-                        -Dformat=ALL \
-                        -DprettyPrint=true \
-                        -DnvdApiKey=${NVD_API_KEY} \
-                        -DskipSystemScope=false
-                      
-                      # Check if vulnerabilities were found
-                      if [ -f target/dependency-check-report.html ]; then
-                        echo "Dependency check report generated successfully"
-                        echo "Report location: target/dependency-check-report.html"
-                      else
-                        echo "Warning: Report was not generated"
-                      fi
-                    failureStrategies:
-                      - onFailure:
-                          errors:
-                            - AllErrors
-                          action:
-                            type: MarkAsSuccess
-              - step:
-                  type: Run
-                  name: Publish Scan Reports
-                  identifier: publish_reports
-                  when:
-                    stageStatus: Success
-                    condition: <+pipeline.variables.SKIP_DEPCHECK> == "false"
-                  spec:
-                    connectorRef: dockerhub_petclinic
-                    image: maven:3.9.6-eclipse-temurin-17
-                    shell: Sh
-                    command: |
-                      # Create reports directory
-                      mkdir -p /harness/reports
-                      
-                      # Copy OWASP report files if they exist
-                      if [ -f target/dependency-check-report.html ]; then
-                        cp target/dependency-check-report.html /harness/reports/
-                        echo "Copied HTML report"
-                      fi
-                      
-                      if [ -f target/dependency-check-report.json ]; then
-                        cp target/dependency-check-report.json /harness/reports/
-                        echo "Copied JSON report"
-                      fi
-                      
-                      if [ -f target/dependency-check-report.xml ]; then
-                        cp target/dependency-check-report.xml /harness/reports/
-                        echo "Copied XML report"
-                      fi
-                      
-                      echo "Reports published to /harness/reports"
-                      ls -lah /harness/reports/              - step:
                   type: RunTests
                   name: Unit Tests
                   identifier: unit_tests
@@ -224,8 +192,6 @@ pipeline:
                       requests:
                         memory: 1Gi
                         cpu: "1"
-                    envVariables:
-                      NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
                     reports:
                       type: JUnit
                       spec:

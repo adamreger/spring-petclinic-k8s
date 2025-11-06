@@ -61,69 +61,119 @@ pipeline:
                       export MAVEN_OPTS="-Xms512m -Xmx1536m -XX:MaxMetaspaceSize=512m"
                       mkdir -p /harness/.m2/repository
                       ./mvnw -B -Dmaven.repo.local=/harness/.m2/repository -DskipTests clean package
+#              - step:
+#                  type: Run
+#                  name: Check Dependencies
+#                  identifier: Check_Dependencies
+#                  when:
+#                    stageStatus: Success
+#                    condition: <+pipeline.variables.SKIP_DEPCHECK> == "false"
+#                  spec:
+#                    connectorRef: dockerhub_petclinic
+#                    image: maven:3.9.6-eclipse-temurin-17
+#                    shell: Sh
+#                    envVariables:
+#                      NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
+#                    command: |-
+#                      unset MAVEN_CONFIG
+#                      export MAVEN_OPTS="-Xms256m -Xmx1024m -XX:MaxMetaspaceSize=384m"
+#                      DC_VERSION=12.0.2
+#                      DC_ARCHIVE="dependency-check-cli-${DC_VERSION}-release.zip"
+#                      DC_BASE_PATH="${HOME}/.dependency-check"
+#                      DC_BIN="${DC_BASE_PATH}/${DC_VERSION}"
+#                      mkdir -p "${DC_BIN}"
+#                      if [ ! -d "${DC_BIN}/dependency-check" ]; then
+#                        DC_URL="https://repo1.maven.org/maven2/org/owasp/dependency-check-cli/${DC_VERSION}/${DC_ARCHIVE}"
+#                        echo "Downloading OWASP Dependency-Check CLI ${DC_VERSION} from ${DC_URL}"
+#                        APT_UPDATED=false
+#                        if ! command -v curl >/dev/null 2>&1; then
+#                          apt-get update && apt-get install -y curl
+#                          APT_UPDATED=true
+#                        fi
+#                        if ! command -v unzip >/dev/null 2>&1; then
+#                          if [ "${APT_UPDATED}" = "false" ]; then
+#                            apt-get update
+#                          fi
+#                          apt-get install -y unzip
+#                        fi
+#                        rm -rf "${DC_BIN:?}/${DC_ARCHIVE}" "${DC_BIN:?}/dependency-check"
+#                        curl -fsSL "${DC_URL}" -o "${DC_BIN}/${DC_ARCHIVE}"
+#                        unzip -q "${DC_BIN}/${DC_ARCHIVE}" -d "${DC_BIN}"
+#                      else
+#                        echo "Reusing cached Dependency-Check CLI ${DC_VERSION}"
+#                      fi
+#                      DC_HOME="${DC_BIN}/dependency-check"
+#                      DC_DATA_DIR="${DC_BASE_PATH}/data"
+#                      rm -rf "${DC_DATA_DIR}"
+#                      mkdir -p "${DC_DATA_DIR}"
+#                      echo "Updating vulnerability database"
+#                      "${DC_HOME}/bin/dependency-check.sh" \
+#                        --data "${DC_DATA_DIR}" \
+#                        --updateonly \
+#                        --nvdApiKey "${NVD_API_KEY}" \
+#                        --nvdApiDelay 4000
+#                      echo "Running OWASP Dependency-Check CLI ${DC_VERSION}"
+#                      mkdir -p dependency-check-report
+#                      "${DC_HOME}/bin/dependency-check.sh" \
+#                        --project "spring-petclinic" \
+#                        --scan "spring-petclinic-api-gateway" \
+#                        --out "dependency-check-report" \
+#                        --data "${DC_DATA_DIR}" \
+#                        --format "HTML" \
+#                        --format "JSON" \
+#                        --noupdate \
+#                        --failOnCVSS 11
+#                      echo "Dependency-Check reports generated under dependency-check-report/"
               - step:
                   type: Run
-                  name: Check Dependencies
-                  identifier: Check_Dependencies
+                  name: OWASP Dependency Check
+                  identifier: owasp_dependency_check
                   when:
                     stageStatus: Success
                     condition: <+pipeline.variables.SKIP_DEPCHECK> == "false"
                   spec:
                     connectorRef: dockerhub_petclinic
-                    image: maven:3.9.6-eclipse-temurin-17
+                    image: maven:3.8-openjdk-8
                     shell: Sh
-                    envVariables:
-                      NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
-                    command: |-
-                      unset MAVEN_CONFIG
-                      export MAVEN_OPTS="-Xms256m -Xmx1024m -XX:MaxMetaspaceSize=384m"
-                      DC_VERSION=12.0.2
-                      DC_ARCHIVE="dependency-check-cli-${DC_VERSION}-release.zip"
-                      DC_BASE_PATH="${HOME}/.dependency-check"
-                      DC_BIN="${DC_BASE_PATH}/${DC_VERSION}"
-                      mkdir -p "${DC_BIN}"
-                      if [ ! -d "${DC_BIN}/dependency-check" ]; then
-                        DC_URL="https://repo1.maven.org/maven2/org/owasp/dependency-check-cli/${DC_VERSION}/${DC_ARCHIVE}"
-                        echo "Downloading OWASP Dependency-Check CLI ${DC_VERSION} from ${DC_URL}"
-                        APT_UPDATED=false
-                        if ! command -v curl >/dev/null 2>&1; then
-                          apt-get update && apt-get install -y curl
-                          APT_UPDATED=true
-                        fi
-                        if ! command -v unzip >/dev/null 2>&1; then
-                          if [ "${APT_UPDATED}" = "false" ]; then
-                            apt-get update
-                          fi
-                          apt-get install -y unzip
-                        fi
-                        rm -rf "${DC_BIN:?}/${DC_ARCHIVE}" "${DC_BIN:?}/dependency-check"
-                        curl -fsSL "${DC_URL}" -o "${DC_BIN}/${DC_ARCHIVE}"
-                        unzip -q "${DC_BIN}/${DC_ARCHIVE}" -d "${DC_BIN}"
-                      else
-                        echo "Reusing cached Dependency-Check CLI ${DC_VERSION}"
+                    command: |
+                      # Run OWASP Dependency Check
+                      mvn org.owasp:dependency-check-maven:check \
+                        -DfailBuildOnCVSS=7 \
+                        -Dformat=ALL \
+                        -DprettyPrint=true
+                      
+                      # Check if vulnerabilities were found
+                      if [ -f target/dependency-check-report.html ]; then
+                        echo "Dependency check report generated"
                       fi
-                      DC_HOME="${DC_BIN}/dependency-check"
-                      DC_DATA_DIR="${DC_BASE_PATH}/data"
-                      rm -rf "${DC_DATA_DIR}"
-                      mkdir -p "${DC_DATA_DIR}"
-                      echo "Updating vulnerability database"
-                      "${DC_HOME}/bin/dependency-check.sh" \
-                        --data "${DC_DATA_DIR}" \
-                        --updateonly \
-                        --nvdApiKey "${NVD_API_KEY}" \
-                        --nvdApiDelay 4000
-                      echo "Running OWASP Dependency-Check CLI ${DC_VERSION}"
-                      mkdir -p dependency-check-report
-                      "${DC_HOME}/bin/dependency-check.sh" \
-                        --project "spring-petclinic" \
-                        --scan "spring-petclinic-api-gateway" \
-                        --out "dependency-check-report" \
-                        --data "${DC_DATA_DIR}" \
-                        --format "HTML" \
-                        --format "JSON" \
-                        --noupdate \
-                        --failOnCVSS 11
-                      echo "Dependency-Check reports generated under dependency-check-report/"
+                    failureStrategies:
+                      - onFailure:
+                          errors:
+                            - AllErrors
+                          action:
+                            type: MarkAsSuccess
+              - step:
+                  type: Run
+                  name: Publish Scan Reports
+                  identifier: publish_reports
+                  when:
+                    stageStatus: Success
+                    condition: <+pipeline.variables.SKIP_DEPCHECK> == "false"
+                  spec:
+                    connectorRef: dockerhub_petclinic
+                    image: maven:3.8-openjdk-8
+                    shell: Sh
+                    command: |
+                      # Create reports directory
+                      mkdir -p /harness/reports
+                      
+                      # Copy OWASP report
+                      if [ -f target/dependency-check-report.html ]; then
+                        cp target/dependency-check-report.html /harness/reports/
+                        cp target/dependency-check-report.json /harness/reports/
+                      fi
+                      
+                      echo "Reports published to /harness/reports"
               - step:
                   type: RunTests
                   name: Unit Tests

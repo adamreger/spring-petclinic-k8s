@@ -111,8 +111,7 @@ pipeline:
                         --data "${DC_DATA_DIR}" \
                         --updateonly \
                         --nvdApiKey "${NVD_API_KEY}" \
-                        --nvdApiDelay 4000 \
-                        --nvdApiThreadCount 1
+                        --nvdApiDelay 4000
                       echo "Running OWASP Dependency-Check CLI ${DC_VERSION}"
                       mkdir -p dependency-check-report
                       "${DC_HOME}/bin/dependency-check.sh" \

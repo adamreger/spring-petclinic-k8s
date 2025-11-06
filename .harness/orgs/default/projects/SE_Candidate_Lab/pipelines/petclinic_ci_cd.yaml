@@ -133,14 +133,28 @@ pipeline:
                     condition: <+pipeline.variables.SKIP_DEPCHECK> == "false"
                   spec:
                     connectorRef: dockerhub_petclinic
-                    image: maven:3.8-openjdk-8
+                    image: maven:3.9.6-eclipse-temurin-11
                     shell: Sh
+                    envVariables:
+                      NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
+                    resources:
+                      limits:
+                        memory: 3Gi
+                        cpu: "2"
+                      requests:
+                        memory: 1Gi
+                        cpu: "1"
                     command: |
-                      # Run OWASP Dependency Check
-                      mvn org.owasp:dependency-check-maven:check \
+                      # Copy the built artifacts from previous step
+                      # The dependencies are already resolved from the Maven Build step
+                      
+                      # Run OWASP Dependency Check with explicit version compatible settings
+                      mvn -B -Dmaven.repo.local=/harness/.m2/repository \
+                        org.owasp:dependency-check-maven:10.0.4:check \
                         -DfailBuildOnCVSS=7 \
                         -Dformat=ALL \
-                        -DprettyPrint=true
+                        -DprettyPrint=true \
+                        -DnvdApiKey=${NVD_API_KEY}
                       
                       # Check if vulnerabilities were found
                       if [ -f target/dependency-check-report.html ]; then
@@ -161,7 +175,7 @@ pipeline:
                     condition: <+pipeline.variables.SKIP_DEPCHECK> == "false"
                   spec:
                     connectorRef: dockerhub_petclinic
-                    image: maven:3.8-openjdk-8
+                    image: maven:3.9.6-eclipse-temurin-11
                     shell: Sh
                     command: |
                       # Create reports directory
@@ -171,9 +185,10 @@ pipeline:
                       if [ -f target/dependency-check-report.html ]; then
                         cp target/dependency-check-report.html /harness/reports/
                         cp target/dependency-check-report.json /harness/reports/
+                        echo "Reports published to /harness/reports"
+                      else
+                        echo "Warning: No report files found"
                       fi
-                      
-                      echo "Reports published to /harness/reports"
               - step:
                   type: RunTests
                   name: Unit Tests

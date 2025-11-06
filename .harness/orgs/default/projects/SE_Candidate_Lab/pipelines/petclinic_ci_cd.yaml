@@ -77,7 +77,7 @@ pipeline:
                     command: |-
                       unset MAVEN_CONFIG
                       export MAVEN_OPTS="-Xms256m -Xmx1024m -XX:MaxMetaspaceSize=384m"
-                      DC_VERSION=11.1.1
+                      DC_VERSION=11.2.1
                       DC_ARCHIVE="dependency-check-${DC_VERSION}-release.zip"
                       DC_BASE_PATH="${HOME}/.dependency-check"
                       DC_BIN="${DC_BASE_PATH}/${DC_VERSION}"

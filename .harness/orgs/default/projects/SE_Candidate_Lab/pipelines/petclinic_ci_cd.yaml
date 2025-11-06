@@ -1,5 +1,5 @@
 pipeline:
-  name: petclinic-ci-cd
+  name: petclinic-dev
   identifier: petclinic_ci_cd
   projectIdentifier: SE_Candidate_Lab
   orgIdentifier: default
@@ -150,7 +150,7 @@ pipeline:
                     command: |
                       # Clean up any previously cached plugin artifacts to avoid version conflicts
                       rm -rf /harness/.m2/repository/org/owasp/dependency-check-maven/
-                      
+
                       # Run OWASP Dependency Check with Java 17 compatible settings
                       mvn -B -Dmaven.repo.local=/harness/.m2/repository \
                         org.owasp:dependency-check-maven:check \
@@ -159,7 +159,7 @@ pipeline:
                         -DprettyPrint=true \
                         -DnvdApiKey=${NVD_API_KEY} \
                         -DskipSystemScope=false
-                      
+
                       # Check if vulnerabilities were found
                       if [ -f target/dependency-check-report.html ]; then
                         echo "Dependency check report generated successfully"

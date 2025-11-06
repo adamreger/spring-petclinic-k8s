@@ -1,0 +1,132 @@
+template:
+  name: K8s Canary Deploy
+  identifier: K8s_Canary_Deploy
+  versionLabel: v1.0.0
+  type: StepGroup
+  projectIdentifier: SE_Candidate_Lab
+  orgIdentifier: default
+  tags: {}
+  spec:
+    stageType: Deployment
+    steps:
+      - step:
+          type: HarnessApproval
+          name: Pre-Deploy Approval
+          identifier: PreDeployApproval
+          when:
+            stageStatus: Success
+            condition: <+input>
+          spec:
+            approvalMessage: Approve deploying <+inputs.serviceRef> to <+inputs.envRef>?
+            includePipelineExecutionHistory: true
+            approvers:
+              userGroups: <+input>
+            timeout: 1h
+            approvalCriteria:
+              type: Criteria
+              spec:
+                conditions:
+                  - type: APPROVAL_CONDITION
+                    spec:
+                      comparator: EQ
+                      fieldName: HarnessApproval
+                      value: "true"
+      - step:
+          name: Canary Deployment
+          identifier: canaryDeployment
+          type: K8sCanaryDeploy
+          timeout: 10m
+          spec:
+            instanceSelection:
+              type: Count
+              spec:
+                count: <+inputs.canaryCount>
+            skipDryRun: false
+      - step:
+          name: Observe Canary
+          identifier: observeCanary
+          type: Wait
+          timeout: 10m
+          spec:
+            duration: 1m
+      - step:
+          name: Check Canary Health
+          identifier: checkCanaryHealth
+          type: ShellScript
+          timeout: 10m
+          spec:
+            shell: Bash
+            onDelegate: true
+            source:
+              type: Inline
+              spec:
+                script: |
+                  set -euo pipefail
+                  ns="<+inputs.namespace>"
+                  app="<+inputs.appName>"     # pass in plain app name, e.g., api-gateway
+                  echo "Checking rollout for ${app}-canary in ${ns}..."
+                  status=0
+                  if ! kubectl rollout status "deployment/${app}-canary" --namespace "${ns}" --timeout=180s; then
+                    status=$?
+                    echo "Canary deployment did not become ready within timeout (exit ${status})."
+                  fi
+
+                  echo "Listing canary pods for quick inspection:"
+                  kubectl get pods --namespace "${ns}" -l harness.io/canary=true -o wide || true
+
+                  echo "Fetching recent logs from canary pod(s) for diagnostics..."
+                  mapfile -t pods < <(kubectl get pods --namespace "${ns}" -l harness.io/canary=true -o name)
+                  if [ ${#pods[@]} -eq 0 ]; then
+                    echo "No canary pods found to fetch logs from."
+                  else
+                    for pod in "${pods[@]}"; do
+                      echo "----- Logs for ${pod} -----"
+                      kubectl logs --namespace "${ns}" "${pod}" --tail=200 || true
+                      echo "----- End logs for ${pod} -----"
+                    done
+                  fi
+                  exit ${status}
+            environmentVariables: []
+            outputVariables: []
+      - step:
+          name: Canary Delete
+          identifier: canaryDelete
+          type: K8sCanaryDelete
+          timeout: 10m
+          spec: {}
+      - step:
+          name: Rolling Deployment
+          identifier: rollingDeployment
+          type: K8sRollingDeploy
+          timeout: 10m
+          spec:
+            skipDryRun: false
+    rollbackSteps:
+      - step:
+          name: Canary Delete (Rollback)
+          identifier: rollbackCanaryDelete
+          type: K8sCanaryDelete
+          timeout: 10m
+          spec: {}
+      - step:
+          name: Rolling Rollback
+          identifier: rollingRollback
+          type: K8sRollingRollback
+          timeout: 10m
+          spec: {}
+    variables:
+      - name: serviceRef
+        type: String
+        value: <+input>
+      - name: envRef
+        type: String
+        value: <+input>
+      - name: namespace
+        type: String
+        value: <+input>
+      - name: appName
+        type: String
+        value: <+input>
+      - name: canaryCount
+        type: Number
+        value: <+input>

@@ -133,7 +133,7 @@ pipeline:
                     condition: <+pipeline.variables.SKIP_DEPCHECK> == "false"
                   spec:
                     connectorRef: dockerhub_petclinic
-                    image: maven:3.9.6-eclipse-temurin-11
+                    image: maven:3.9.6-eclipse-temurin-17
                     shell: Sh
                     envVariables:
                       NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
@@ -145,20 +145,24 @@ pipeline:
                         memory: 1Gi
                         cpu: "1"
                     command: |
-                      # Copy the built artifacts from previous step
-                      # The dependencies are already resolved from the Maven Build step
+                      # Clean up any previously cached plugin artifacts to avoid version conflicts
+                      rm -rf /harness/.m2/repository/org/owasp/dependency-check-maven/
                       
-                      # Run OWASP Dependency Check with explicit version compatible settings
+                      # Run OWASP Dependency Check with Java 17 compatible settings
                       mvn -B -Dmaven.repo.local=/harness/.m2/repository \
-                        org.owasp:dependency-check-maven:10.0.4:check \
+                        org.owasp:dependency-check-maven:check \
                         -DfailBuildOnCVSS=7 \
                         -Dformat=ALL \
                         -DprettyPrint=true \
-                        -DnvdApiKey=${NVD_API_KEY}
+                        -DnvdApiKey=${NVD_API_KEY} \
+                        -DskipSystemScope=false
                       
                       # Check if vulnerabilities were found
                       if [ -f target/dependency-check-report.html ]; then
-                        echo "Dependency check report generated"
+                        echo "Dependency check report generated successfully"
+                        echo "Report location: target/dependency-check-report.html"
+                      else
+                        echo "Warning: Report was not generated"
                       fi
                     failureStrategies:
                       - onFailure:
@@ -175,21 +179,30 @@ pipeline:
                     condition: <+pipeline.variables.SKIP_DEPCHECK> == "false"
                   spec:
                     connectorRef: dockerhub_petclinic
-                    image: maven:3.9.6-eclipse-temurin-11
+                    image: maven:3.9.6-eclipse-temurin-17
                     shell: Sh
                     command: |
                       # Create reports directory
                       mkdir -p /harness/reports
                       
-                      # Copy OWASP report
+                      # Copy OWASP report files if they exist
                       if [ -f target/dependency-check-report.html ]; then
                         cp target/dependency-check-report.html /harness/reports/
-                        cp target/dependency-check-report.json /harness/reports/
-                        echo "Reports published to /harness/reports"
-                      else
-                        echo "Warning: No report files found"
+                        echo "Copied HTML report"
                       fi
-              - step:
+                      
+                      if [ -f target/dependency-check-report.json ]; then
+                        cp target/dependency-check-report.json /harness/reports/
+                        echo "Copied JSON report"
+                      fi
+                      
+                      if [ -f target/dependency-check-report.xml ]; then
+                        cp target/dependency-check-report.xml /harness/reports/
+                        echo "Copied XML report"
+                      fi
+                      
+                      echo "Reports published to /harness/reports"
+                      ls -lah /harness/reports/              - step:
                   type: RunTests
                   name: Unit Tests
                   identifier: unit_tests

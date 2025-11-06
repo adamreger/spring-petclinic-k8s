@@ -98,8 +98,8 @@ pipeline:
                         echo "Reusing cached Dependency-Check CLI ${DC_VERSION}"
                       fi
                       DC_HOME="${DC_BIN}/dependency-check"
-                      DC_DATA_DIR=$(mktemp -d /tmp/dc-data-XXXXXX)
-                      trap 'rm -rf "${DC_DATA_DIR}"' EXIT
+                      DC_DATA_DIR="${DC_BIN}/data"
+                      mkdir -p "${DC_DATA_DIR}"
                       echo "Running OWASP Dependency-Check CLI ${DC_VERSION}"
                       mkdir -p dependency-check-report
                       "${DC_HOME}/bin/dependency-check.sh" \
@@ -110,7 +110,9 @@ pipeline:
                         --format "HTML" \
                         --format "JSON" \
                         --nvdApiKey "${NVD_API_KEY}" \
-                        --nvdApiDelay 3500
+                        --nvdApiDelay 3500 \
+                        --nvdApiThreadCount 1 \
+                        --cveValidForHours 168
                       ls -R dependency-check-report
               - step:
                   type: RunTests

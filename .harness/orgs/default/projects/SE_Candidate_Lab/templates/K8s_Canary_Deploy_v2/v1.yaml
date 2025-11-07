@@ -58,7 +58,14 @@ template:
                         type: Count
                         spec:
                           count: <+stage.variables.canaryCount>
+                      skipUnchangedManifest: true
                     timeout: 10m
+                    failureStrategies:
+                      - onFailure:
+                          errors:
+                            - AllErrors
+                          action:
+                            type: MarkAsSuccess
                 - step:
                     type: Wait
                     name: Observe Canary

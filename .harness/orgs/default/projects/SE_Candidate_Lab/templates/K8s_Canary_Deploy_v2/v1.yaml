@@ -59,7 +59,7 @@ template:
                         spec:
                           count: <+stage.variables.canaryCount>
                       skipUnchangedManifest: true
-                    timeout: 10m
+                    timeout: 3m
                     failureStrategies:
                       - onFailure:
                           errors:
@@ -110,13 +110,13 @@ template:
                             exit ${status}
                       environmentVariables: []
                       outputVariables: []
-                    timeout: 10m
+                    timeout: 3m
                 - step:
                     type: K8sCanaryDelete
                     name: Canary Delete
                     identifier: Canary_Delete
                     spec: {}
-                    timeout: 10m
+                    timeout: 3m
                 - step:
                     type: K8sRollingDeploy
                     name: Rolling Deployment
@@ -124,7 +124,7 @@ template:
                     spec:
                       skipDryRun: false
                       pruningEnabled: false
-                    timeout: 10m
+                    timeout: 3m
         rollbackSteps: []
     failureStrategies:
       - onFailure:

@@ -25,7 +25,7 @@ pipeline:
       value: <+input>.default(1)
   stages:
     - stage:
-        name: Build and Test
+        name: Maven Build
         identifier: Build_Test
         type: CI
         spec:
@@ -64,6 +64,28 @@ pipeline:
                       export MAVEN_OPTS="-Xms512m -Xmx1536m -XX:MaxMetaspaceSize=512m"
                       mkdir -p /harness/.m2/repository
                       ./mvnw -B -Dmaven.repo.local=/harness/.m2/repository -DskipTests clean package
+          caching:
+            enabled: true
+            paths: []
+          buildIntelligence:
+            enabled: true
+        description: ""
+    - stage:
+        name: Run Tests
+        identifier: Run_Tests
+        description: ""
+        type: CI
+        spec:
+          cloneCodebase: true
+          caching:
+            enabled: true
+            override: true
+          buildIntelligence:
+            enabled: true
+          infrastructure:
+            useFromStage: Build_Test
+          execution:
+            steps:
               - step:
                   type: Run
                   name: Check Dependencies
@@ -200,82 +222,76 @@ pipeline:
                       spec:
                         paths:
                           - target/surefire-reports/*.xml
-          caching:
-            enabled: true
-            paths: []
-          buildIntelligence:
-            enabled: true
-        description: ""
     - stage:
-        name: Build Image and Push
-        identifier: Buildpack_Image
+        name: Build Images
+        identifier: Build_All_Images
+        description: ""
         type: CI
         spec:
           cloneCodebase: true
-          infrastructure:
-            type: KubernetesDirect
-            spec:
-              connectorRef: k8s_docker_desktop
-              namespace: harness-delegate-ng
-              automountServiceAccountToken: true
-              nodeSelector: {}
-              os: Linux
-          execution:
-            steps:
-              - step:
-                  type: BuildAndPushDockerRegistry
-                  name: Customers Image
-                  identifier: build_push_customers
-                  spec:
-                    connectorRef: dockerhub_push
-                    repo: areger55/harness-se-lab-dockerhub-repo
-                    tags:
-                      - customers-<+codebase.commitSha>
-                      - customers-latest
-                    context: spring-petclinic-customers-service
-                    dockerfile: spring-petclinic-customers-service/Dockerfile
-              - step:
-                  type: BuildAndPushDockerRegistry
-                  name: Vets Image
-                  identifier: build_push_vets
-                  spec:
-                    connectorRef: dockerhub_push
-                    repo: areger55/harness-se-lab-dockerhub-repo
-                    tags:
-                      - vets-<+codebase.commitSha>
-                      - vets-latest
-                    context: spring-petclinic-vets-service
-                    dockerfile: spring-petclinic-vets-service/Dockerfile
-              - step:
-                  type: BuildAndPushDockerRegistry
-                  name: Visits Image
-                  identifier: build_push_visits
-                  spec:
-                    connectorRef: dockerhub_push
-                    repo: areger55/harness-se-lab-dockerhub-repo
-                    tags:
-                      - visits-<+codebase.commitSha>
-                      - visits-latest
-                    context: spring-petclinic-visits-service
-                    dockerfile: spring-petclinic-visits-service/Dockerfile
-              - step:
-                  type: BuildAndPushDockerRegistry
-                  name: API Gateway Image
-                  identifier: build_push_gateway
-                  spec:
-                    connectorRef: dockerhub_push
-                    repo: areger55/harness-se-lab-dockerhub-repo
-                    tags:
-                      - gateway-<+codebase.commitSha>
-                      - gateway-latest
-                    context: spring-petclinic-api-gateway
-                    dockerfile: spring-petclinic-api-gateway/Dockerfile
           caching:
             enabled: true
+            override: true
             paths: []
           buildIntelligence:
             enabled: true
-        description: ""
+          infrastructure:
+            useFromStage: Build_Test
+          execution:
+            steps:
+              - stepGroup:
+                  name: Build All Images
+                  identifier: Build_All_Images
+                  steps:
+                    - parallel:
+                        - step:
+                            type: BuildAndPushDockerRegistry
+                            name: API Gateway Image
+                            identifier: build_push_gateway
+                            spec:
+                              connectorRef: dockerhub_push
+                              repo: areger55/harness-se-lab-dockerhub-repo
+                              tags:
+                                - gateway-<+codebase.commitSha>
+                                - gateway-latest
+                              dockerfile: spring-petclinic-api-gateway/Dockerfile
+                              context: spring-petclinic-api-gateway
+                        - step:
+                            type: BuildAndPushDockerRegistry
+                            name: Customers Image
+                            identifier: build_push_customers
+                            spec:
+                              connectorRef: dockerhub_push
+                              repo: areger55/harness-se-lab-dockerhub-repo
+                              tags:
+                                - customers-<+codebase.commitSha>
+                                - customers-latest
+                              dockerfile: spring-petclinic-customers-service/Dockerfile
+                              context: spring-petclinic-customers-service
+                        - step:
+                            type: BuildAndPushDockerRegistry
+                            name: Vets Image
+                            identifier: build_push_vets
+                            spec:
+                              connectorRef: dockerhub_push
+                              repo: areger55/harness-se-lab-dockerhub-repo
+                              tags:
+                                - vets-<+codebase.commitSha>
+                                - vets-latest
+                              dockerfile: spring-petclinic-vets-service/Dockerfile
+                              context: spring-petclinic-vets-service
+                        - step:
+                            type: BuildAndPushDockerRegistry
+                            name: Visits Image
+                            identifier: build_push_visits
+                            spec:
+                              connectorRef: dockerhub_push
+                              repo: areger55/harness-se-lab-dockerhub-repo
+                              tags:
+                                - visits-<+codebase.commitSha>
+                                - visits-latest
+                              dockerfile: spring-petclinic-visits-service/Dockerfile
+                              context: spring-petclinic-visits-service
     - stage:
         name: Deploy API-Gateway
         identifier: Deploy_to_Dev

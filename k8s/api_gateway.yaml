@@ -1,86 +1,76 @@
 # ---------------------------
-# Namespace
-# ---------------------------
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: petclinic
-
----
-# ---------------------------
-# API Gateway
+# API Gateway Deployment
 # ---------------------------
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: api-gateway
-  namespace: petclinic
+  labels:
+    app: petclinic
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: api-gateway
+      app: petclinic
+      tier: api-gateway
   template:
     metadata:
       labels:
-        app: api-gateway
+        app: petclinic
+        tier: api-gateway
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/port:  "8080"
     spec:
       containers:
-        - name: api-gateway
-          image: springcommunity/spring-petclinic-api-gateway:latest
-          imagePullPolicy: IfNotPresent
-          ports:
-            - containerPort: 8080
-          env:
-            # If the gateway needs explicit downstream URLs, set them here.
-            # Remove if your build already auto-discovers by service DNS names.
-            - name: APP_CUSTOMERS_URI
-              value: "http://customers.petclinic.svc.cluster.local:8080"
-            - name: APP_VETS_URI
-              value: "http://vets.petclinic.svc.cluster.local:8080"
-            - name: APP_VISITS_URI
-              value: "http://visits.petclinic.svc.cluster.local:8080"
-            - name: CUSTOMERS_SERVICE_URL
-              value: "http://customers.petclinic.svc.cluster.local:8080"
-            - name: VETS_SERVICE_URL
-              value: "http://vets.petclinic.svc.cluster.local:8080"
-            - name: VISITS_SERVICE_URL
-              value: "http://visits.petclinic.svc.cluster.local:8080"
-            - name: SERVER_PORT
-              value: "8080"
-            - name: SPRING_PROFILES_ACTIVE
-              value: "kubernetes"
-          readinessProbe:
-            httpGet:
-              path: /actuator/health/readiness
-              port: 8080
-            initialDelaySeconds: 10
-            periodSeconds: 10
-          livenessProbe:
-            httpGet:
-              path: /actuator/health/liveness
-              port: 8080
-            initialDelaySeconds: 30
-            periodSeconds: 30
+        - name: app
+          image: areger55/harness-se-lab-dockerhub-repo:gateway-latest
+          imagePullPolicy: Always
           resources:
             requests:
-              cpu: "100m"
-              memory: "256Mi"
+              memory: 1Gi
             limits:
-              cpu: "500m"
-              memory: "512Mi"
+              memory: 1Gi
+          envFrom:
+            - configMapRef:
+                name: app
+            - secretRef:
+                name: database
+            - configMapRef:
+                name: app-wavefront
+                optional: true
+            - secretRef:
+                name: app-wavefront
+                optional: true
+          ports:
+            - name: http
+              containerPort: 8080
+          livenessProbe:
+            httpGet:
+              port: http
+              path: /actuator/health/liveness
+            initialDelaySeconds: 60
+            timeoutSeconds: 4
+          readinessProbe:
+            httpGet:
+              port: http
+              path: /actuator/health/readiness
+            initialDelaySeconds: 60
+            timeoutSeconds: 4
 ---
+# ---------------------------
+# API Gateway Service
+# ---------------------------
 apiVersion: v1
 kind: Service
 metadata:
   name: api-gateway
-  namespace: petclinic
 spec:
-  type: NodePort
-  selector:
-    app: api-gateway
   ports:
-    - name: http
-      port: 8080
-      targetPort: 8080
-      nodePort: 30808   # change if this port is taken locally
+    - port: 8080
+      protocol: TCP
+      targetPort: http
+  selector:
+    app: petclinic
+    tier: api-gateway

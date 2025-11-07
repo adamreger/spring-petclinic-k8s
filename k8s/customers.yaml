@@ -1,70 +1,82 @@
 # ---------------------------
-# Namespace
-# ---------------------------
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: petclinic
-
----
-# ---------------------------
-# Customers Service
+# Customers Deployment
 # ---------------------------
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: customers
-  namespace: petclinic
+  labels:
+    app: petclinic
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: customers
+      app: petclinic
+      tier: customers
   template:
     metadata:
       labels:
-        app: customers
+        app: petclinic
+        tier: customers
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/port:  "8080"
     spec:
       containers:
-        - name: customers
+        - name: app
           image: areger55/harness-se-lab-dockerhub-repo:customers-latest
           imagePullPolicy: Always
-          ports:
-            - containerPort: 8082
-          env:
-            # If your services default to H2, leave this out.
-            # Uncomment the next line only if you later add MySQL:
-            # - name: SPRING_PROFILES_ACTIVE
-            #   value: "mysql"
-          readinessProbe:
-            httpGet:
-              path: /actuator/health/readiness
-              port: 8082
-            initialDelaySeconds: 10
-            periodSeconds: 10
-          livenessProbe:
-            httpGet:
-              path: /actuator/health/liveness
-              port: 8082
-            initialDelaySeconds: 30
-            periodSeconds: 30
           resources:
             requests:
-              cpu: "100m"
-              memory: "256Mi"
+              memory: 1Gi
             limits:
-              cpu: "500m"
-              memory: "512Mi"
+              memory: 1Gi
+          envFrom:
+            - configMapRef:
+                name: app
+            - secretRef:
+                name: database
+            - configMapRef:
+                name: app-wavefront
+                optional: true
+            - secretRef:
+                name: app-wavefront
+                optional: true
+          env:
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: mysql-password
+                  name: pdb-mysql
+          ports:
+            - name: http
+              containerPort: 8080
+          livenessProbe:
+            httpGet:
+              port: http
+              path: /actuator/health/liveness
+            initialDelaySeconds: 60
+            timeoutSeconds: 4
+          readinessProbe:
+            httpGet:
+              port: http
+              path: /actuator/health/readiness
+            initialDelaySeconds: 60
+            timeoutSeconds: 4
 ---
+# ---------------------------
+# Customers Service
+# ---------------------------
 apiVersion: v1
 kind: Service
 metadata:
   name: customers
-  namespace: petclinic
 spec:
-  type: ClusterIP
-  selector:
-    app: customers
   ports:
-    - port: 8082
-      targetPort: 8082
+    - port: 8080
+      protocol: TCP
+      targetPort: http
+  selector:
+    app: petclinic
+    tier: customers

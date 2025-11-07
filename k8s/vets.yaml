@@ -1,65 +1,82 @@
 # ---------------------------
-# Namespace
-# ---------------------------
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: petclinic
-
----
-# ---------------------------
-# Vets Service
+# Vets Deployment
 # ---------------------------
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: vets
-  namespace: petclinic
+  labels:
+    app: petclinic
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: vets
+      app: petclinic
+      tier: vets
   template:
     metadata:
       labels:
-        app: vets
+        app: petclinic
+        tier: vets
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/actuator/prometheus"
+        prometheus.io/port:  "8080"
     spec:
       containers:
-        - name: vets
+        - name: app
           image: areger55/harness-se-lab-dockerhub-repo:vets-latest
           imagePullPolicy: Always
-          ports:
-            - containerPort: 8083
-          readinessProbe:
-            httpGet:
-              path: /actuator/health/readiness
-              port: 8083
-            initialDelaySeconds: 10
-            periodSeconds: 10
-          livenessProbe:
-            httpGet:
-              path: /actuator/health/liveness
-              port: 8083
-            initialDelaySeconds: 30
-            periodSeconds: 30
           resources:
             requests:
-              cpu: "100m"
-              memory: "256Mi"
+              memory: 1Gi
             limits:
-              cpu: "500m"
-              memory: "512Mi"
+              memory: 1Gi
+          envFrom:
+            - configMapRef:
+                name: app
+            - secretRef:
+                name: database
+            - configMapRef:
+                name: app-wavefront
+                optional: true
+            - secretRef:
+                name: app-wavefront
+                optional: true
+          env:
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: mysql-password
+                  name: pdb-mysql
+          ports:
+            - name: http
+              containerPort: 8080
+          livenessProbe:
+            httpGet:
+              port: http
+              path: /actuator/health/liveness
+            initialDelaySeconds: 60
+            timeoutSeconds: 4
+          readinessProbe:
+            httpGet:
+              port: http
+              path: /actuator/health/readiness
+            initialDelaySeconds: 60
+            timeoutSeconds: 4
 ---
+# ---------------------------
+# Vets Service
+# ---------------------------
 apiVersion: v1
 kind: Service
 metadata:
   name: vets
-  namespace: petclinic
 spec:
-  type: ClusterIP
-  selector:
-    app: vets
   ports:
-    - port: 8083
-      targetPort: 8083
+    - port: 8080
+      protocol: TCP
+      targetPort: http
+  selector:
+    app: petclinic
+    tier: vets

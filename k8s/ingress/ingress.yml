@@ -3,7 +3,7 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: ingress
-  namespace: spring-petclinic
+  namespace: petclinic
 spec:
   rules:
     - host: petclinic.withtanzu.com

@@ -312,7 +312,6 @@ pipeline:
                                 identifier: PreDeploy_Approval
                                 type: HarnessApproval
                                 when:
-                                  stageStatus: Success
                                   condition: <+input>
                 variables:
                   - name: envRef
@@ -343,7 +342,6 @@ pipeline:
                                 identifier: PreDeploy_Approval
                                 type: HarnessApproval
                                 when:
-                                  stageStatus: Success
                                   condition: <+input>
                 variables:
                   - name: envRef
@@ -374,7 +372,6 @@ pipeline:
                                 identifier: PreDeploy_Approval
                                 type: HarnessApproval
                                 when:
-                                  stageStatus: Success
                                   condition: <+input>
                 variables:
                   - name: envRef
@@ -405,7 +402,6 @@ pipeline:
                                 identifier: PreDeploy_Approval
                                 type: HarnessApproval
                                 when:
-                                  stageStatus: Success
                                   condition: <+input>
                 variables:
                   - name: envRef

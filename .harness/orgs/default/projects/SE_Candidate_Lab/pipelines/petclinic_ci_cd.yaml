@@ -65,10 +65,10 @@ pipeline:
                       mkdir -p /harness/.m2/repository
                       ./mvnw -B -Dmaven.repo.local=/harness/.m2/repository -DskipTests clean package
           caching:
-            enabled: true
+            enabled: false
             paths: []
           buildIntelligence:
-            enabled: true
+            enabled: false
         description: ""
     - stage:
         name: Run Tests

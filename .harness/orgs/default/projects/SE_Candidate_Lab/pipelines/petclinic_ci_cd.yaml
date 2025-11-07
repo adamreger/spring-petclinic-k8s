@@ -66,7 +66,6 @@ pipeline:
                       ./mvnw -B -Dmaven.repo.local=/harness/.m2/repository -DskipTests clean package
           caching:
             enabled: false
-            paths: []
           buildIntelligence:
             enabled: false
         description: ""
@@ -78,10 +77,9 @@ pipeline:
         spec:
           cloneCodebase: true
           caching:
-            enabled: true
-            override: true
+            enabled: false
           buildIntelligence:
-            enabled: true
+            enabled: false
           infrastructure:
             useFromStage: Build_Test
           execution:
@@ -230,11 +228,9 @@ pipeline:
         spec:
           cloneCodebase: true
           caching:
-            enabled: true
-            override: true
-            paths: []
+            enabled: false
           buildIntelligence:
-            enabled: true
+            enabled: false
           infrastructure:
             useFromStage: Build_Test
           execution:

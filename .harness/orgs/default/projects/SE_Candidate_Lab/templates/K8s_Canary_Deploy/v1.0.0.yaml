@@ -15,7 +15,7 @@ template:
           identifier: PreDeployApproval
           when:
             stageStatus: Success
-            condition: <+inputs.envRef> == "prod"
+            condition: <+input>
           spec:
             approvalMessage: Approve deploying <+inputs.serviceName> to <+inputs.envRef>?
             includePipelineExecutionHistory: true

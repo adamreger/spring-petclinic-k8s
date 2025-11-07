@@ -322,7 +322,7 @@ pipeline:
                     value: customersservice
                   - name: canaryCount
                     type: Number
-                    value: <+input>
+                    value: <+pipeline.variables.CANARY_POD_COUNT>
         - stage:
             name: Deploy Vets to DEV
             identifier: deploy_vets_dev
@@ -352,7 +352,7 @@ pipeline:
                     value: vetsservice
                   - name: canaryCount
                     type: Number
-                    value: <+input>
+                    value: <+pipeline.variables.CANARY_POD_COUNT>
         - stage:
             name: Deploy Visits to DEV
             identifier: deploy_visits_dev
@@ -382,7 +382,7 @@ pipeline:
                     value: visitsservice
                   - name: canaryCount
                     type: Number
-                    value: <+input>
+                    value: <+pipeline.variables.CANARY_POD_COUNT>
         - stage:
             name: Deploy Gateway to DEV
             identifier: deploy_gateway_dev
@@ -412,4 +412,4 @@ pipeline:
                     value: apigatewayservice
                   - name: canaryCount
                     type: Number
-                    value: <+input>
+                    value: <+pipeline.variables.CANARY_POD_COUNT>

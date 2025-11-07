@@ -292,3 +292,33 @@ pipeline:
                                 - visits-latest
                               dockerfile: spring-petclinic-visits-service/Dockerfile
                               context: spring-petclinic-visits-service
+    - stage:
+        name: Deploy to DEV
+        identifier: Deploy_to_DEV
+        tags: {}
+        template:
+          templateRef: K8s_Canary_Deploy_v2
+          versionLabel: v1
+          templateInputs:
+            type: Deployment
+            spec:
+              execution:
+                steps:
+                  - stepGroup:
+                      identifier: K8s_Canary_Deploy
+                      steps:
+                        - step:
+                            identifier: PreDeploy_Approval
+                            type: HarnessApproval
+                            when:
+                              condition: <+input>
+            variables:
+              - name: envRef
+                type: String
+                value: <+input>
+              - name: serviceName
+                type: String
+                value: <+input>.executionInput().selectOneFrom(customersservice,apigatewayservice,vetsservice,visitsservice)
+              - name: canaryCount
+                type: Number
+                value: <+input>

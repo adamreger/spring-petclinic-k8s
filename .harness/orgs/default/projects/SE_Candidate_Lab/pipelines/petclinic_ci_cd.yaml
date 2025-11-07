@@ -302,17 +302,6 @@ pipeline:
               versionLabel: v1
               templateInputs:
                 type: Deployment
-                spec:
-                  execution:
-                    steps:
-                      - stepGroup:
-                          identifier: K8s_Canary_Deploy
-                          steps:
-                            - step:
-                                identifier: PreDeploy_Approval
-                                type: HarnessApproval
-                                when:
-                                  condition: <+input>
                 variables:
                   - name: envRef
                     type: String
@@ -332,17 +321,6 @@ pipeline:
               versionLabel: v1
               templateInputs:
                 type: Deployment
-                spec:
-                  execution:
-                    steps:
-                      - stepGroup:
-                          identifier: K8s_Canary_Deploy
-                          steps:
-                            - step:
-                                identifier: PreDeploy_Approval
-                                type: HarnessApproval
-                                when:
-                                  condition: <+input>
                 variables:
                   - name: envRef
                     type: String
@@ -362,17 +340,6 @@ pipeline:
               versionLabel: v1
               templateInputs:
                 type: Deployment
-                spec:
-                  execution:
-                    steps:
-                      - stepGroup:
-                          identifier: K8s_Canary_Deploy
-                          steps:
-                            - step:
-                                identifier: PreDeploy_Approval
-                                type: HarnessApproval
-                                when:
-                                  condition: <+input>
                 variables:
                   - name: envRef
                     type: String
@@ -392,17 +359,6 @@ pipeline:
               versionLabel: v1
               templateInputs:
                 type: Deployment
-                spec:
-                  execution:
-                    steps:
-                      - stepGroup:
-                          identifier: K8s_Canary_Deploy
-                          steps:
-                            - step:
-                                identifier: PreDeploy_Approval
-                                type: HarnessApproval
-                                when:
-                                  condition: <+input>
                 variables:
                   - name: envRef
                     type: String

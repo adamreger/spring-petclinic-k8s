@@ -139,7 +139,7 @@ pipeline:
                     tags:
                       - customers-<+codebase.commitSha>
                       - customers-latest
-                    context: spring-petclinic-customers-service
+                    context: .
                     dockerfile: spring-petclinic-customers-service/Dockerfile
                     arguments:
                       - "--verbosity=debug"
@@ -153,7 +153,7 @@ pipeline:
                     tags:
                       - vets-<+codebase.commitSha>
                       - vets-latest
-                    context: spring-petclinic-vets-service
+                    context: .
                     dockerfile: spring-petclinic-vets-service/Dockerfile
               - step:
                   type: BuildAndPushDockerRegistry
@@ -165,7 +165,7 @@ pipeline:
                     tags:
                       - visits-<+codebase.commitSha>
                       - visits-latest
-                    context: spring-petclinic-visits-service
+                    context: .
                     dockerfile: spring-petclinic-visits-service/Dockerfile
               - step:
                   type: BuildAndPushDockerRegistry
@@ -177,5 +177,5 @@ pipeline:
                     tags:
                       - gateway-<+codebase.commitSha>
                       - gateway-latest
-                    context: spring-petclinic-api-gateway
+                    context: .
                     dockerfile: spring-petclinic-api-gateway/Dockerfile

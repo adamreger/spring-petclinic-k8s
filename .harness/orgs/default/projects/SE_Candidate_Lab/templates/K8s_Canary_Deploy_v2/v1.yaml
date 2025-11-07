@@ -39,6 +39,15 @@ template:
                     when:
                       stageStatus: Success
                       condition: <+input>
+                    approvalCriteria:
+                      type: Criteria
+                      spec:
+                        conditions:
+                          - type: APPROVAL_CONDITION
+                            spec:
+                              comparator: EQ
+                              fieldName: HarnessApproval
+                              value: "true"
                 - step:
                     type: K8sCanaryDeploy
                     name: Canary Deployment

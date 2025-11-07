@@ -292,33 +292,128 @@ pipeline:
                                 - visits-latest
                               dockerfile: spring-petclinic-visits-service/Dockerfile
                               context: spring-petclinic-visits-service
-    - stage:
-        name: Deploy to DEV
-        identifier: Deploy_to_DEV
-        tags: {}
-        template:
-          templateRef: K8s_Canary_Deploy_v2
-          versionLabel: v1
-          templateInputs:
-            type: Deployment
-            spec:
-              execution:
-                steps:
-                  - stepGroup:
-                      identifier: K8s_Canary_Deploy
-                      steps:
-                        - step:
-                            identifier: PreDeploy_Approval
-                            type: HarnessApproval
-                            when:
-                              condition: <+input>
-            variables:
-              - name: envRef
-                type: String
-                value: <+input>
-              - name: serviceName
-                type: String
-                value: <+input>.executionInput().selectOneFrom(customersservice,apigatewayservice,vetsservice,visitsservice)
-              - name: canaryCount
-                type: Number
-                value: <+input>
+    - parallel:
+        - stage:
+            name: Deploy Customers to DEV
+            identifier: deploy_customers_dev
+            tags: {}
+            template:
+              templateRef: K8s_Canary_Deploy_v2
+              versionLabel: v1
+              templateInputs:
+                type: Deployment
+                spec:
+                  execution:
+                    steps:
+                      - stepGroup:
+                          identifier: K8s_Canary_Deploy
+                          steps:
+                            - step:
+                                identifier: PreDeploy_Approval
+                                type: HarnessApproval
+                                when:
+                                  stageStatus: Success
+                                  condition: <+input>
+                variables:
+                  - name: envRef
+                    type: String
+                    value: dev
+                  - name: serviceName
+                    type: String
+                    value: customersservice
+                  - name: canaryCount
+                    type: Number
+                    value: <+input>
+        - stage:
+            name: Deploy Vets to DEV
+            identifier: deploy_vets_dev
+            tags: {}
+            template:
+              templateRef: K8s_Canary_Deploy_v2
+              versionLabel: v1
+              templateInputs:
+                type: Deployment
+                spec:
+                  execution:
+                    steps:
+                      - stepGroup:
+                          identifier: K8s_Canary_Deploy
+                          steps:
+                            - step:
+                                identifier: PreDeploy_Approval
+                                type: HarnessApproval
+                                when:
+                                  stageStatus: Success
+                                  condition: <+input>
+                variables:
+                  - name: envRef
+                    type: String
+                    value: dev
+                  - name: serviceName
+                    type: String
+                    value: vetsservice
+                  - name: canaryCount
+                    type: Number
+                    value: <+input>
+        - stage:
+            name: Deploy Visits to DEV
+            identifier: deploy_visits_dev
+            tags: {}
+            template:
+              templateRef: K8s_Canary_Deploy_v2
+              versionLabel: v1
+              templateInputs:
+                type: Deployment
+                spec:
+                  execution:
+                    steps:
+                      - stepGroup:
+                          identifier: K8s_Canary_Deploy
+                          steps:
+                            - step:
+                                identifier: PreDeploy_Approval
+                                type: HarnessApproval
+                                when:
+                                  stageStatus: Success
+                                  condition: <+input>
+                variables:
+                  - name: envRef
+                    type: String
+                    value: dev
+                  - name: serviceName
+                    type: String
+                    value: visitsservice
+                  - name: canaryCount
+                    type: Number
+                    value: <+input>
+        - stage:
+            name: Deploy Gateway to DEV
+            identifier: deploy_gateway_dev
+            tags: {}
+            template:
+              templateRef: K8s_Canary_Deploy_v2
+              versionLabel: v1
+              templateInputs:
+                type: Deployment
+                spec:
+                  execution:
+                    steps:
+                      - stepGroup:
+                          identifier: K8s_Canary_Deploy
+                          steps:
+                            - step:
+                                identifier: PreDeploy_Approval
+                                type: HarnessApproval
+                                when:
+                                  stageStatus: Success
+                                  condition: <+input>
+                variables:
+                  - name: envRef
+                    type: String
+                    value: dev
+                  - name: serviceName
+                    type: String
+                    value: apigatewayservice
+                  - name: canaryCount
+                    type: Number
+                    value: <+input>

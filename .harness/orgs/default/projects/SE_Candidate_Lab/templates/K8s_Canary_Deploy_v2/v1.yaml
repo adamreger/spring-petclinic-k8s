@@ -85,10 +85,10 @@ template:
                           script: |
                             set -euo pipefail
                             ns="<+infra.namespace>"
-                            svc="<+stage.variables.serviceName>"
-                            echo "Checking rollout for ${svc}-canary in ${ns}..."
+                            app="<+stage.variables.appName>"
+                            echo "Checking rollout for ${app}-canary in ${ns}..."
                             status=0
-                            if ! kubectl rollout status "deployment/${svc}-canary" --namespace "${ns}" --timeout=180s; then
+                            if ! kubectl rollout status "deployment/${app}-canary" --namespace "${ns}" --timeout=180s; then
                               status=$?
                               echo "Canary deployment did not become ready within timeout (exit ${status})."
                             fi
@@ -139,6 +139,11 @@ template:
         required: true
         value: <+input>
       - name: serviceName
+        type: String
+        description: ""
+        required: true
+        value: <+input>
+      - name: appName
         type: String
         description: ""
         required: true

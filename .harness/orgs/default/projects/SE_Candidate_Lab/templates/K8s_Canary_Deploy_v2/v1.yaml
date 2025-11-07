@@ -116,5 +116,21 @@ template:
             - AllErrors
           action:
             type: StageRollback
+    variables:
+      - name: envRef
+        type: String
+        description: ""
+        required: true
+        value: <+input>
+      - name: serviceName
+        type: String
+        description: ""
+        required: true
+        value: <+input>
+      - name: canaryCount
+        type: Number
+        description: ""
+        required: true
+        value: <+input>
   identifier: K8s_Canary_Deploy_v2
   versionLabel: v1

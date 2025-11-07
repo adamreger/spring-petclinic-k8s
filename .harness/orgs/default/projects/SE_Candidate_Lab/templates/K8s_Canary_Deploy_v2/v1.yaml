@@ -8,12 +8,12 @@ template:
     spec:
       deploymentType: Kubernetes
       service:
-        serviceRef: customersservice
+        serviceRef: <+stage.variables.serviceName>
       environment:
-        environmentRef: dev
+        environmentRef: <+stage.variables.envRef>
         deployToAll: false
         infrastructureDefinitions:
-          - identifier: k8s_infra_dev
+          - identifier: k8s_infra_<+stage.variables.envRef>
       execution:
         steps:
           - stepGroup:
@@ -48,7 +48,7 @@ template:
                       instanceSelection:
                         type: Count
                         spec:
-                          count: <+inputs.canaryCount>
+                          count: <+stage.variables.canaryCount>
                     timeout: 10m
                 - step:
                     type: Wait
@@ -69,7 +69,7 @@ template:
                           script: |
                             set -euo pipefail
                             ns="<+infra.namespace>"
-                            svc="<+inputs.serviceName>"
+                            svc="<+stage.variables.serviceName>"
                             echo "Checking rollout for ${svc}-canary in ${ns}..."
                             status=0
                             if ! kubectl rollout status "deployment/${svc}-canary" --namespace "${ns}" --timeout=180s; then

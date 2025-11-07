@@ -311,7 +311,7 @@ pipeline:
                     value: customersservice
                   - name: appName
                     type: String
-                    value: <+input>
+                    value: customers
                   - name: canaryCount
                     type: Number
                     value: <+pipeline.variables.CANARY_POD_COUNT>
@@ -333,7 +333,7 @@ pipeline:
                     value: vetsservice
                   - name: appName
                     type: String
-                    value: <+input>
+                    value: vets
                   - name: canaryCount
                     type: Number
                     value: <+pipeline.variables.CANARY_POD_COUNT>
@@ -355,7 +355,7 @@ pipeline:
                     value: visitsservice
                   - name: appName
                     type: String
-                    value: <+input>
+                    value: visits
                   - name: canaryCount
                     type: Number
                     value: <+pipeline.variables.CANARY_POD_COUNT>
@@ -377,7 +377,7 @@ pipeline:
                     value: apigatewayservice
                   - name: appName
                     type: String
-                    value: <+input>
+                    value: visits
                   - name: canaryCount
                     type: Number
                     value: <+pipeline.variables.CANARY_POD_COUNT>

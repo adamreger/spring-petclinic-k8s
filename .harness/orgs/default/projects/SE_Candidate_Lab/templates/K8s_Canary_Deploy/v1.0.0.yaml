@@ -17,7 +17,7 @@ template:
             stageStatus: Success
             condition: <+inputs.envRef> == "prod"
           spec:
-            approvalMessage: Approve deploying <+inputs.serviceRef> to <+inputs.envRef>?
+            approvalMessage: Approve deploying <+inputs.serviceName> to <+inputs.envRef>?
             includePipelineExecutionHistory: true
             approvers:
               userGroups:
@@ -65,10 +65,10 @@ template:
                 script: |
                   set -euo pipefail
                   ns="<+infra.namespace>"
-                  app="<+inputs.appName>"
-                  echo "Checking rollout for ${app}-canary in ${ns}..."
+                  svc="<+inputs.serviceName>"
+                  echo "Checking rollout for ${svc}-canary in ${ns}..."
                   status=0
-                  if ! kubectl rollout status "deployment/${app}-canary" --namespace "${ns}" --timeout=180s; then
+                  if ! kubectl rollout status "deployment/${svc}-canary" --namespace "${ns}" --timeout=180s; then
                     status=$?
                     echo "Canary deployment did not become ready within timeout (exit ${status})."
                   fi
@@ -117,13 +117,10 @@ template:
           timeout: 10m
           spec: {}
     variables:
-      - name: serviceRef
-        type: String
-        value: <+input>
       - name: envRef
         type: String
         value: <+input>
-      - name: appName
+      - name: serviceName
         type: String
         value: <+input>
       - name: canaryCount

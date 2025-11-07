@@ -25,7 +25,7 @@ template:
                     name: Pre-Deploy Approval
                     identifier: PreDeploy_Approval
                     spec:
-                      approvalMessage: Approve deploying <+inputs.serviceName> to <+inputs.envRef>?
+                      approvalMessage: Approve deploying <+stage.variables.serviceName> to <+stage.variables.envRef>?
                       includePipelineExecutionHistory: true
                       isAutoRejectEnabled: false
                       approvers:
@@ -38,7 +38,7 @@ template:
                     timeout: 1h
                     when:
                       stageStatus: Success
-                      condition: <+input>
+                      condition: <+pipeline.variables.targetEnv> == "prod"
                     approvalCriteria:
                       type: Criteria
                       spec:

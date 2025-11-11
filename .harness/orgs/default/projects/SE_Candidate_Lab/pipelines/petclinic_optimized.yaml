@@ -1,0 +1,499 @@
+pipeline:
+  name: petclinic-optimized
+  identifier: petclinic_optimized
+  projectIdentifier: SE_Candidate_Lab
+  orgIdentifier: default
+  tags: {}
+  properties:
+    ci:
+      codebase:
+        connectorRef: github_petclinic
+        repoName: adamreger/spring-petclinic-k8s
+        build: <+input>
+  variables:
+    - name: DEPLOY_ENV
+      type: String
+      value: <+input>.default(dev).selectOneFrom(dev,stg,prd)
+    - name: SKIP_DEPCHECK
+      type: String
+      value: <+input>.default(true).selectOneFrom(true,false)
+    - name: SKIP_BUILD_TEST
+      type: String
+      value: <+input>.default(true).selectOneFrom(true,false)
+    - name: CANARY_POD_COUNT
+      type: String
+      value: <+input>.default(1)
+  stages:
+    # STAGE 1: Build JARs once and cache them
+    - stage:
+        name: Build and Package
+        identifier: build_package
+        type: CI
+        spec:
+          cloneCodebase: true
+          infrastructure:
+            type: KubernetesDirect
+            spec:
+              connectorRef: k8s_docker_desktop
+              namespace: harness-delegate-ng
+              automountServiceAccountToken: true
+              nodeSelector: {}
+              os: Linux
+          execution:
+            steps:
+              # Build all modules in parallel using matrix strategy
+              - step:
+                  type: Run
+                  name: Maven Build All Modules
+                  identifier: mvn_build_all
+                  strategy:
+                    matrix:
+                      module:
+                        - spring-petclinic-api-gateway
+                        - spring-petclinic-customers-service
+                        - spring-petclinic-vets-service
+                        - spring-petclinic-visits-service
+                      maxConcurrency: 4
+                  spec:
+                    connectorRef: dockerhub_petclinic
+                    image: maven:3.9.6-eclipse-temurin-8
+                    shell: Sh
+                    envVariables:
+                      MODULE: <+matrix.module>
+                    resources:
+                      limits:
+                        memory: 3Gi
+                        cpu: "2"
+                      requests:
+                        memory: 1Gi
+                        cpu: "1"
+                    command: |
+                      unset MAVEN_CONFIG
+                      chmod +x mvnw
+                      export MAVEN_OPTS="-Xms512m -Xmx1536m -XX:MaxMetaspaceSize=512m"
+                      mkdir -p /harness/.m2/repository
+                      
+                      echo "Building module: $MODULE"
+                      ./mvnw -B -pl "$MODULE" -am clean package -DskipTests \
+                        -Dmaven.repo.local=/harness/.m2/repository
+                      
+                      # Verify JAR was created
+                      echo "=== Built JAR for $MODULE ==="
+                      find ${MODULE}/target -name "*.jar" -type f | head -5
+              
+              # Collect and organize artifacts for sharing across stages
+              - step:
+                  type: Run
+                  name: Prepare Artifacts
+                  identifier: prepare_artifacts
+                  spec:
+                    connectorRef: dockerhub_petclinic
+                    image: alpine:3.18
+                    shell: Sh
+                    command: |
+                      echo "=== Organizing artifacts for caching ==="
+                      
+                      # Create artifacts directory at a known location
+                      mkdir -p /harness/artifacts
+                      
+                      # Copy JARs with standardized naming
+                      echo "Collecting JARs..."
+                      
+                      cp spring-petclinic-api-gateway/target/*.jar /harness/artifacts/api-gateway.jar 2>/dev/null || echo "Warning: Gateway JAR not found"
+                      cp spring-petclinic-customers-service/target/*.jar /harness/artifacts/customers-service.jar 2>/dev/null || echo "Warning: Customers JAR not found"
+                      cp spring-petclinic-vets-service/target/*.jar /harness/artifacts/vets-service.jar 2>/dev/null || echo "Warning: Vets JAR not found"
+                      cp spring-petclinic-visits-service/target/*.jar /harness/artifacts/visits-service.jar 2>/dev/null || echo "Warning: Visits JAR not found"
+                      
+                      # Display collected artifacts
+                      echo ""
+                      echo "=== Artifacts ready for caching ==="
+                      ls -lh /harness/artifacts/
+                      echo ""
+                      echo "Total size: $(du -sh /harness/artifacts/ | cut -f1)"
+          
+          caching:
+            enabled: true
+            paths:
+              - /harness/.m2/repository
+              - /harness/artifacts
+          buildIntelligence:
+            enabled: true
+        description: "Build all JAR artifacts once and cache them"
+    
+    # STAGE 2: Run Tests (restored artifacts available for dependency scanning)
+    - stage:
+        name: Security and Quality Checks
+        identifier: security_quality
+        description: "Run security scans and tests on built artifacts"
+        type: CI
+        spec:
+          cloneCodebase: true
+          infrastructure:
+            useFromStage: build_package
+          execution:
+            steps:
+              # Verify artifacts are available
+              - step:
+                  type: Run
+                  name: Verify Cached Artifacts
+                  identifier: verify_artifacts
+                  spec:
+                    connectorRef: dockerhub_petclinic
+                    image: alpine:3.18
+                    shell: Sh
+                    command: |
+                      echo "=== Verifying cached artifacts ==="
+                      if [ -d /harness/artifacts ]; then
+                        ls -lh /harness/artifacts/
+                        echo ""
+                        echo "✓ All artifacts restored automatically by Harness Cache Intelligence"
+                      else
+                        echo "✗ Artifacts directory not found!"
+                        exit 1
+                      fi
+              
+              # Run OWASP Dependency Check on cached JARs
+              - step:
+                  type: Run
+                  name: OWASP Dependency Check
+                  identifier: owasp_dependency_check
+                  when:
+                    stageStatus: Success
+                    condition: <+pipeline.variables.SKIP_DEPCHECK> == "false"
+                  spec:
+                    connectorRef: dockerhub_petclinic
+                    image: maven:3.9.6-eclipse-temurin-17
+                    shell: Sh
+                    envVariables:
+                      NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
+                    resources:
+                      limits:
+                        memory: 3Gi
+                        cpu: "2"
+                      requests:
+                        memory: 1Gi
+                        cpu: "1"
+                    command: |
+                      echo "=== Running OWASP Dependency Check on cached artifacts ==="
+                      
+                      unset MAVEN_CONFIG
+                      export MAVEN_OPTS="-Xms256m -Xmx1024m -XX:MaxMetaspaceSize=384m"
+                      
+                      # Install dependency-check CLI
+                      DC_VERSION=12.0.2
+                      DC_ARCHIVE="dependency-check-cli-${DC_VERSION}-release.zip"
+                      DC_BASE_PATH="${HOME}/.dependency-check"
+                      DC_BIN="${DC_BASE_PATH}/${DC_VERSION}"
+                      
+                      mkdir -p "${DC_BIN}"
+                      
+                      if [ ! -d "${DC_BIN}/dependency-check" ]; then
+                        echo "Downloading OWASP Dependency-Check CLI ${DC_VERSION}..."
+                        apt-get update && apt-get install -y curl unzip
+                        DC_URL="https://repo1.maven.org/maven2/org/owasp/dependency-check-cli/${DC_VERSION}/${DC_ARCHIVE}"
+                        curl -fsSL "${DC_URL}" -o "${DC_BIN}/${DC_ARCHIVE}"
+                        unzip -q "${DC_BIN}/${DC_ARCHIVE}" -d "${DC_BIN}"
+                      fi
+                      
+                      DC_HOME="${DC_BIN}/dependency-check"
+                      DC_DATA_DIR="${DC_BASE_PATH}/data"
+                      mkdir -p "${DC_DATA_DIR}"
+                      
+                      # Update vulnerability database
+                      echo "Updating NVD database..."
+                      "${DC_HOME}/bin/dependency-check.sh" \
+                        --data "${DC_DATA_DIR}" \
+                        --updateonly \
+                        --nvdApiKey "${NVD_API_KEY}" \
+                        --nvdApiDelay 4000
+                      
+                      # Scan the pre-built JARs (no rebuild needed!)
+                      echo "Scanning cached JAR artifacts..."
+                      mkdir -p /harness/dependency-check-report
+                      
+                      "${DC_HOME}/bin/dependency-check.sh" \
+                        --project "spring-petclinic" \
+                        --scan "/harness/artifacts" \
+                        --out "/harness/dependency-check-report" \
+                        --data "${DC_DATA_DIR}" \
+                        --format "HTML" \
+                        --format "JSON" \
+                        --format "XML" \
+                        --noupdate \
+                        --failOnCVSS 11
+                      
+                      echo "✓ Dependency-Check completed"
+                      echo "Reports available at: /harness/dependency-check-report/"
+                    failureStrategies:
+                      - onFailure:
+                          errors:
+                            - AllErrors
+                          action:
+                            type: MarkAsSuccess
+              
+              # Run Unit Tests
+              - step:
+                  type: RunTests
+                  name: Unit Tests
+                  identifier: unit_tests
+                  when:
+                    stageStatus: Success
+                    condition: <+pipeline.variables.SKIP_BUILD_TEST> == "false"
+                  spec:
+                    language: Java
+                    buildTool: Maven
+                    args: test
+                    image: maven:3.9.6-eclipse-temurin-8
+                    connectorRef: dockerhub_petclinic
+                    resources:
+                      limits:
+                        memory: 3Gi
+                        cpu: "2"
+                      requests:
+                        memory: 1Gi
+                        cpu: "1"
+                    envVariables:
+                      NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
+                    additionalArgs: "-B -Dmaven.repo.local=/harness/.m2/repository -DargLine='-Xmx1024m -XX:MaxMetaspaceSize=512m' -DforkCount=1"
+                    runOnlySelectedTests: true
+                    preCommand: |
+                      echo "Running tests with cached dependencies"
+                    reports:
+                      type: JUnit
+                      spec:
+                        paths:
+                          - "**/target/surefire-reports/*.xml"
+          
+          caching:
+            enabled: true
+            paths:
+              - /harness/.m2/repository
+              - /harness/artifacts
+          buildIntelligence:
+            enabled: true
+    
+    # STAGE 3: Build Docker Images using cached JARs
+    - stage:
+        name: Build and Push Container Images
+        identifier: build_push_images
+        description: "Build Docker images from cached JAR artifacts"
+        type: CI
+        spec:
+          cloneCodebase: true
+          infrastructure:
+            type: KubernetesDirect
+            spec:
+              connectorRef: k8s_docker_desktop
+              namespace: harness-delegate-ng
+              automountServiceAccountToken: true
+              nodeSelector: {}
+              os: Linux
+          execution:
+            steps:
+              # Verify artifacts before building images
+              - step:
+                  type: Run
+                  name: Verify Artifacts for Docker Build
+                  identifier: verify_artifacts_docker
+                  spec:
+                    connectorRef: dockerhub_petclinic
+                    image: alpine:3.18
+                    shell: Sh
+                    command: |
+                      echo "=== Verifying artifacts for Docker builds ==="
+                      ls -lh /harness/artifacts/
+                      
+                      # Verify each required JAR exists
+                      for jar in api-gateway.jar customers-service.jar vets-service.jar visits-service.jar; do
+                        if [ -f "/harness/artifacts/${jar}" ]; then
+                          echo "✓ ${jar} found ($(du -h /harness/artifacts/${jar} | cut -f1))"
+                        else
+                          echo "✗ ${jar} NOT FOUND!"
+                          exit 1
+                        fi
+                      done
+                      
+                      echo ""
+                      echo "✓ All artifacts restored automatically by Harness Cache Intelligence"
+              
+              # Build all images in parallel
+              - stepGroup:
+                  name: Build All Images
+                  identifier: Build_All_Images
+                  steps:
+                    - step:
+                        type: BuildAndPushDockerRegistry
+                        name: API Gateway Image
+                        identifier: build_push_gateway
+                        spec:
+                          connectorRef: dockerhub_push
+                          repo: areger55/harness-se-lab-dockerhub-repo
+                          tags:
+                            - gateway-<+codebase.commitSha>
+                            - gateway-latest
+                          context: /harness
+                          caching: true
+                          buildArgs:
+                            JAR_FILE: artifacts/api-gateway.jar
+                          resources:
+                            limits:
+                              memory: 2Gi
+                              cpu: "1"
+                    
+                    - step:
+                        type: BuildAndPushDockerRegistry
+                        name: Customers Image
+                        identifier: build_push_customers
+                        spec:
+                          connectorRef: dockerhub_push
+                          repo: areger55/harness-se-lab-dockerhub-repo
+                          tags:
+                            - customers-<+codebase.commitSha>
+                            - customers-latest
+                          context: /harness
+                          caching: true
+                          buildArgs:
+                            JAR_FILE: artifacts/customers-service.jar
+                          resources:
+                            limits:
+                              memory: 2Gi
+                              cpu: "1"
+                    
+                    - step:
+                        type: BuildAndPushDockerRegistry
+                        name: Vets Image
+                        identifier: build_push_vets
+                        spec:
+                          connectorRef: dockerhub_push
+                          repo: areger55/harness-se-lab-dockerhub-repo
+                          tags:
+                            - vets-<+codebase.commitSha>
+                            - vets-latest
+                          context: /harness
+                          caching: true
+                          buildArgs:
+                            JAR_FILE: artifacts/vets-service.jar
+                          resources:
+                            limits:
+                              memory: 2Gi
+                              cpu: "1"
+                    
+                    - step:
+                        type: BuildAndPushDockerRegistry
+                        name: Visits Image
+                        identifier: build_push_visits
+                        spec:
+                          connectorRef: dockerhub_push
+                          repo: areger55/harness-se-lab-dockerhub-repo
+                          tags:
+                            - visits-<+codebase.commitSha>
+                            - visits-latest
+                          context: /harness
+                          caching: true
+                          buildArgs:
+                            JAR_FILE: artifacts/visits-service.jar
+                          resources:
+                            limits:
+                              memory: 2Gi
+                              cpu: "1"
+          
+          caching:
+            enabled: true
+            paths:
+              - /harness/artifacts
+          buildIntelligence:
+            enabled: true
+    
+    # STAGE 4: Deploy
+    - parallel:
+        - stage:
+            name: Deploy Customers
+            identifier: deploy_customers
+            tags: {}
+            template:
+              templateRef: K8s_Canary_Deploy_v2
+              versionLabel: v1
+              templateInputs:
+                type: Deployment
+                variables:
+                  - name: envRef
+                    type: String
+                    value: <+pipeline.variables.DEPLOY_ENV>
+                  - name: serviceName
+                    type: String
+                    value: customersservice
+                  - name: appName
+                    type: String
+                    value: customers
+                  - name: canaryCount
+                    type: Number
+                    value: <+pipeline.variables.CANARY_POD_COUNT>
+        
+        - stage:
+            name: Deploy Vets
+            identifier: deploy_vets
+            tags: {}
+            template:
+              templateRef: K8s_Canary_Deploy_v2
+              versionLabel: v1
+              templateInputs:
+                type: Deployment
+                variables:
+                  - name: envRef
+                    type: String
+                    value: <+pipeline.variables.DEPLOY_ENV>
+                  - name: serviceName
+                    type: String
+                    value: vetsservice
+                  - name: appName
+                    type: String
+                    value: vets
+                  - name: canaryCount
+                    type: Number
+                    value: <+pipeline.variables.CANARY_POD_COUNT>
+        
+        - stage:
+            name: Deploy Visits
+            identifier: deploy_visits
+            tags: {}
+            template:
+              templateRef: K8s_Canary_Deploy_v2
+              versionLabel: v1
+              templateInputs:
+                type: Deployment
+                variables:
+                  - name: envRef
+                    type: String
+                    value: <+pipeline.variables.DEPLOY_ENV>
+                  - name: serviceName
+                    type: String
+                    value: visitsservice
+                  - name: appName
+                    type: String
+                    value: visits
+                  - name: canaryCount
+                    type: Number
+                    value: <+pipeline.variables.CANARY_POD_COUNT>
+        
+        - stage:
+            name: Deploy Gateway
+            identifier: deploy_gateway
+            tags: {}
+            template:
+              templateRef: K8s_Canary_Deploy_v2
+              versionLabel: v1
+              templateInputs:
+                type: Deployment
+                variables:
+                  - name: envRef
+                    type: String
+                    value: <+pipeline.variables.DEPLOY_ENV>
+                  - name: serviceName
+                    type: String
+                    value: apigatewayservice
+                  - name: appName
+                    type: String
+                    value: gateway
+                  - name: canaryCount
+                    type: Number
+                    value: <+pipeline.variables.CANARY_POD_COUNT>

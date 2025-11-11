@@ -60,19 +60,13 @@ template:
                         spec:
                           count: <+stage.variables.canaryCount>
                       skipUnchangedManifest: true
-                    timeout: 2m
+                    timeout: 3m
                     failureStrategies:
                       - onFailure:
                           errors:
                             - AllErrors
                           action:
                             type: MarkAsFailure
-                # - step:
-                  #   type: Wait
-                  #   name: Observe Canary
-                  #   identifier: Observe_Canary
-                  #   spec:
-                    #   duration: 1m
                 - step:
                     type: ShellScript
                     name: Check Canary Health

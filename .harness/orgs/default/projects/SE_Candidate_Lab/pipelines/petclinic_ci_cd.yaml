@@ -236,8 +236,8 @@ pipeline:
                                 - gateway-latest
                               context: .
                               dockerfile: Dockerfile
-                              arguments:
-                                - "--build-arg=MODULE=spring-petclinic-api-gateway"
+                              buildArgs:
+                                MODULE: spring-petclinic-api-gateway
                         - step:
                             type: BuildAndPushDockerRegistry
                             name: Customers Image
@@ -250,8 +250,8 @@ pipeline:
                                 - customers-latest
                               context: .
                               dockerfile: Dockerfile
-                              arguments:
-                                - "--build-arg=MODULE=spring-petclinic-customers-service"
+                              buildArgs:
+                                MODULE: spring-petclinic-customers-service
                         - step:
                             type: BuildAndPushDockerRegistry
                             name: Vets Image
@@ -264,8 +264,8 @@ pipeline:
                                 - vets-latest
                               context: .
                               dockerfile: Dockerfile
-                              arguments:
-                                - "--build-arg=MODULE=spring-petclinic-vets-service"
+                              buildArgs:
+                                MODULE: spring-petclinic-vets-service
                         - step:
                             type: BuildAndPushDockerRegistry
                             name: Visits Image
@@ -278,8 +278,8 @@ pipeline:
                                 - visits-latest
                               context: .
                               dockerfile: Dockerfile
-                              arguments:
-                                - "--build-arg=MODULE=spring-petclinic-visits-service"
+                              buildArgs:
+                                MODULE: spring-petclinic-visits-service
     - parallel:
         - stage:
             name: Deploy Customers to DEV

@@ -3,8 +3,8 @@
 
 FROM eclipse-temurin:8-jre
 
-# Create app user for security
-RUN addgroup -S spring && adduser -S spring -G spring
+# Create dedicated non-root user/group for the app
+RUN addgroup --system spring && adduser --system --ingroup spring spring
 
 # Set working directory
 WORKDIR /app

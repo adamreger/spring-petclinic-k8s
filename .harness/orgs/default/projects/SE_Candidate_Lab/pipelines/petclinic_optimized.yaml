@@ -60,13 +60,6 @@ pipeline:
                     shell: Sh
                     envVariables:
                       MODULE: <+matrix.module>
-                    resources:
-                      limits:
-                        memory: 3Gi
-                        cpu: "2"
-                      requests:
-                        memory: 1Gi
-                        cpu: "1"
                     command: |
                       unset MAVEN_CONFIG
                       chmod +x mvnw
@@ -166,13 +159,6 @@ pipeline:
                     shell: Sh
                     envVariables:
                       NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
-                    resources:
-                      limits:
-                        memory: 3Gi
-                        cpu: "2"
-                      requests:
-                        memory: 1Gi
-                        cpu: "1"
                     command: |
                       echo "=== Running OWASP Dependency Check on cached artifacts ==="
                       
@@ -245,13 +231,6 @@ pipeline:
                     args: test
                     image: maven:3.9.6-eclipse-temurin-8
                     connectorRef: dockerhub_petclinic
-                    resources:
-                      limits:
-                        memory: 3Gi
-                        cpu: "2"
-                      requests:
-                        memory: 1Gi
-                        cpu: "1"
                     envVariables:
                       NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
                     additionalArgs: "-B -Dmaven.repo.local=/harness/.m2/repository -DargLine='-Xmx1024m -XX:MaxMetaspaceSize=512m' -DforkCount=1"

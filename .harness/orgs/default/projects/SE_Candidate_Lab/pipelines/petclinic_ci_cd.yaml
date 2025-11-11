@@ -247,8 +247,6 @@ pipeline:
                               tags:
                                 - gateway-<+codebase.commitSha>
                                 - gateway-latest
-                              dockerfile: spring-petclinic-api-gateway/Dockerfile
-                              context: .
                         - step:
                             type: BuildAndPushDockerRegistry
                             name: Customers Image
@@ -259,8 +257,6 @@ pipeline:
                               tags:
                                 - customers-<+codebase.commitSha>
                                 - customers-latest
-                              dockerfile: spring-petclinic-customers-service/Dockerfile
-                              context: .
                         - step:
                             type: BuildAndPushDockerRegistry
                             name: Vets Image
@@ -271,8 +267,6 @@ pipeline:
                               tags:
                                 - vets-<+codebase.commitSha>
                                 - vets-latest
-                              dockerfile: spring-petclinic-vets-service/Dockerfile
-                              context: .
                         - step:
                             type: BuildAndPushDockerRegistry
                             name: Visits Image
@@ -283,8 +277,6 @@ pipeline:
                               tags:
                                 - visits-<+codebase.commitSha>
                                 - visits-latest
-                              dockerfile: spring-petclinic-visits-service/Dockerfile
-                              context: .
     - parallel:
         - stage:
             name: Deploy Customers to DEV

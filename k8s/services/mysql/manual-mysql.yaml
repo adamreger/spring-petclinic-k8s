@@ -1,0 +1,123 @@
+# ---------------------------
+# Headless Service (stable network ID for the StatefulSet, if needed)
+# ---------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: pdb-mysql-hl
+  labels:
+    app: pdb-mysql
+spec:
+  clusterIP: None
+  selector:
+    app: pdb-mysql
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: 3306
+
+---
+# ---------------------------
+# Client Service (what apps should use: host "pdb-mysql", port 3306)
+# ---------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: pdb-mysql
+  labels:
+    app: pdb-mysql
+spec:
+  selector:
+    app: pdb-mysql
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: 3306
+
+---
+# ---------------------------
+# MySQL StatefulSet (official image)
+# ---------------------------
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: pdb-mysql
+  labels:
+    app: pdb-mysql
+spec:
+  serviceName: pdb-mysql-hl
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pdb-mysql
+  template:
+    metadata:
+      labels:
+        app: pdb-mysql
+    spec:
+      containers:
+        - name: mysql
+          # Use the official Oracle MySQL image. 8.0 is a safe, stable tag; you can also pin a patch.
+          image: mysql:8.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: mysql
+              containerPort: 3306
+          env:
+            # Root password from secret
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pdb-mysql
+                  key: mysql-root-password
+            # Create a "petclinic" database and user for your app
+            - name: MYSQL_DATABASE
+              value: petclinic
+            - name: MYSQL_USER
+              value: petclinic
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pdb-mysql
+                  key: mysql-password
+          # Simple probes that work with the official image
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - mysqladmin ping -h 127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD" | grep 'mysqld is alive'
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - mysqladmin ping -h 127.0.0.1 -uroot -p"$MYSQL_ROOT_PASSWORD" | grep 'mysqld is alive'
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "750m"
+              memory: "1Gi"
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        # If you don't have a default SC, set storageClassName explicitly here.
+        # storageClassName: "hostpath"   # example; comment out if you have a default
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi

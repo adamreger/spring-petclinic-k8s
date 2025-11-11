@@ -53,7 +53,7 @@ pipeline:
                         - spring-petclinic-customers-service
                         - spring-petclinic-vets-service
                         - spring-petclinic-visits-service
-                      maxConcurrency: 2
+                      maxConcurrency: 1
                   spec:
                     connectorRef: dockerhub_petclinic
                     image: maven:3.9.6-eclipse-temurin-8

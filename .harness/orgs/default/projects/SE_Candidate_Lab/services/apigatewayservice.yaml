@@ -16,7 +16,7 @@ service:
                   connectorRef: github_petclinic
                   gitFetchType: Branch
                   paths:
-                    - k8s/api_gateway.yaml
+                    - k8s/api-gateway.yaml
                   branch: master
               skipResourceVersioning: false
               enableDeclarativeRollback: false

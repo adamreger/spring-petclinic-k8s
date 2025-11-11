@@ -240,8 +240,16 @@ pipeline:
                               tags:
                                 - gateway-<+codebase.commitSha>
                                 - gateway-latest
+                              caching: true
                               buildArgs:
                                 MODULE: spring-petclinic-api-gateway
+                              resources:
+                                limits:
+                                  memory: 3Gi
+                                  cpu: "2"
+                                requests:
+                                  memory: 1Gi
+                                  cpu: "1"
                         - step:
                             type: BuildAndPushDockerRegistry
                             name: Customers Image
@@ -252,8 +260,16 @@ pipeline:
                               tags:
                                 - customers-<+codebase.commitSha>
                                 - customers-latest
+                              caching: true
                               buildArgs:
                                 MODULE: spring-petclinic-customers-service
+                              resources:
+                                limits:
+                                  memory: 3Gi
+                                  cpu: "2"
+                                requests:
+                                  memory: 1Gi
+                                  cpu: "1"
                         - step:
                             type: BuildAndPushDockerRegistry
                             name: Vets Image
@@ -264,8 +280,16 @@ pipeline:
                               tags:
                                 - vets-<+codebase.commitSha>
                                 - vets-latest
+                              caching: true
                               buildArgs:
                                 MODULE: spring-petclinic-vets-service
+                              resources:
+                                limits:
+                                  memory: 3Gi
+                                  cpu: "2"
+                                requests:
+                                  memory: 1Gi
+                                  cpu: "1"
                         - step:
                             type: BuildAndPushDockerRegistry
                             name: Visits Image
@@ -276,8 +300,16 @@ pipeline:
                               tags:
                                 - visits-<+codebase.commitSha>
                                 - visits-latest
+                              caching: true
                               buildArgs:
                                 MODULE: spring-petclinic-visits-service
+                              resources:
+                                limits:
+                                  memory: 3Gi
+                                  cpu: "2"
+                                requests:
+                                  memory: 1Gi
+                                  cpu: "1"
     - parallel:
         - stage:
             name: Deploy Customers to DEV

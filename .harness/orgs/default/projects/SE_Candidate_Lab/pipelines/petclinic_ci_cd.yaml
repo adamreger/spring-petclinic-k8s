@@ -234,8 +234,6 @@ pipeline:
                               tags:
                                 - gateway-<+codebase.commitSha>
                                 - gateway-latest
-                              context: .
-                              dockerfile: Dockerfile
                               buildArgs:
                                 MODULE: spring-petclinic-api-gateway
                         - step:
@@ -248,8 +246,6 @@ pipeline:
                               tags:
                                 - customers-<+codebase.commitSha>
                                 - customers-latest
-                              context: .
-                              dockerfile: Dockerfile
                               buildArgs:
                                 MODULE: spring-petclinic-customers-service
                         - step:
@@ -262,8 +258,6 @@ pipeline:
                               tags:
                                 - vets-<+codebase.commitSha>
                                 - vets-latest
-                              context: .
-                              dockerfile: Dockerfile
                               buildArgs:
                                 MODULE: spring-petclinic-vets-service
                         - step:
@@ -276,8 +270,6 @@ pipeline:
                               tags:
                                 - visits-<+codebase.commitSha>
                                 - visits-latest
-                              context: .
-                              dockerfile: Dockerfile
                               buildArgs:
                                 MODULE: spring-petclinic-visits-service
     - parallel:

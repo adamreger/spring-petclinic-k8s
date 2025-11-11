@@ -1,7 +1,7 @@
 # Generic Dockerfile for all PetClinic microservices
 # Uses build args to specify which JAR to include
 
-FROM eclipse-temurin:8-jre-alpine
+FROM eclipse-temurin:8-jre
 
 # Create app user for security
 RUN addgroup -S spring && adduser -S spring -G spring

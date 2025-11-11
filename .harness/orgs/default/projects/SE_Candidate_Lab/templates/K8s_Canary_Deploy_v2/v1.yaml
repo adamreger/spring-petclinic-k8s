@@ -68,6 +68,12 @@ template:
                           action:
                             type: MarkAsFailure
                 - step:
+                    type: Wait
+                    name: Observe Canary
+                    identifier: Observe_Canary
+                    spec:
+                      duration: 1m
+                - step:
                     type: ShellScript
                     name: Check Canary Health
                     identifier: Check_Canary_Health

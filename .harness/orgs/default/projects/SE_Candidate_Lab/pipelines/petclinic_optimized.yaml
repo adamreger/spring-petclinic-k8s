@@ -63,6 +63,7 @@ pipeline:
                     command: |
                       unset MAVEN_CONFIG
                       chmod +x mvnw
+                      export MAVEN_OPTS="-Xmx2g"
                       mkdir -p /harness/.m2/repository
                       
                       echo "Building module: $MODULE"

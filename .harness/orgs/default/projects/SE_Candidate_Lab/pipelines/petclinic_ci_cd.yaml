@@ -45,9 +45,9 @@ pipeline:
                   name: Maven Build
                   identifier: mvn_build
                   spec:
-                    shell: Sh
-                    image: maven:3.9.6-eclipse-temurin-8
                     connectorRef: dockerhub_petclinic
+                    image: maven:3.9.6-eclipse-temurin-8
+                    shell: Sh
                     envVariables:
                       NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
                     resources:
@@ -57,13 +57,6 @@ pipeline:
                       requests:
                         memory: 1Gi
                         cpu: "1"
-                    command: |
-                      unset MAVEN_CONFIG
-                      chmod +x mvnw
-                      java -version && ./mvnw -v
-                      export MAVEN_OPTS="-Xms512m -Xmx1536m -XX:MaxMetaspaceSize=512m"
-                      mkdir -p /harness/.m2/repository
-                      ./mvnw -B -Dmaven.repo.local=/harness/.m2/repository -DskipTests clean package
           caching:
             enabled: true
             paths: []

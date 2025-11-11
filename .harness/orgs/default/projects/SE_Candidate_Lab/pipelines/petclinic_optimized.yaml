@@ -332,6 +332,7 @@ pipeline:
                             - gateway-<+codebase.commitSha>
                             - gateway-latest
                           context: /harness
+                          dockerfile: /harness/Optimized.Dockerfile
                           caching: true
                           buildArgs:
                             JAR_FILE: artifacts/api-gateway.jar
@@ -351,6 +352,7 @@ pipeline:
                             - customers-<+codebase.commitSha>
                             - customers-latest
                           context: /harness
+                          dockerfile: /harness/Optimized.Dockerfile
                           caching: true
                           buildArgs:
                             JAR_FILE: artifacts/customers-service.jar
@@ -370,6 +372,7 @@ pipeline:
                             - vets-<+codebase.commitSha>
                             - vets-latest
                           context: /harness
+                          dockerfile: /harness/Optimized.Dockerfile
                           caching: true
                           buildArgs:
                             JAR_FILE: artifacts/vets-service.jar
@@ -389,6 +392,7 @@ pipeline:
                             - visits-<+codebase.commitSha>
                             - visits-latest
                           context: /harness
+                          dockerfile: /harness/Optimized.Dockerfile
                           caching: true
                           buildArgs:
                             JAR_FILE: artifacts/visits-service.jar

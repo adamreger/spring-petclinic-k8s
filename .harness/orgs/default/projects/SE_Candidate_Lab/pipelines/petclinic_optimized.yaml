@@ -63,7 +63,6 @@ pipeline:
                     command: |
                       unset MAVEN_CONFIG
                       chmod +x mvnw
-                      export MAVEN_OPTS="-Xms512m -Xmx2048m -XX:MaxMetaspaceSize=512m"
                       mkdir -p /harness/.m2/repository
                       
                       echo "Building module: $MODULE"

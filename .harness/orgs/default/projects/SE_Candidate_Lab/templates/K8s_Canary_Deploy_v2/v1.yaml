@@ -9,6 +9,7 @@ template:
       deploymentType: Kubernetes
       service:
         serviceRef: <+stage.variables.serviceName>
+        failureStrategies: []
       environment:
         environmentRef: <+stage.variables.envRef>
         deployToAll: false
@@ -59,19 +60,13 @@ template:
                         spec:
                           count: <+stage.variables.canaryCount>
                       skipUnchangedManifest: true
-                    timeout: 1m
+                    timeout: 2m
                     failureStrategies:
                       - onFailure:
                           errors:
                             - AllErrors
                           action:
                             type: MarkAsFailure
-                - step:
-                    type: Wait
-                    name: Observe Canary
-                    identifier: Observe_Canary
-                    spec:
-                      duration: 1m
                 - step:
                     type: ShellScript
                     name: Check Canary Health
@@ -110,13 +105,13 @@ template:
                             exit ${status}
                       environmentVariables: []
                       outputVariables: []
-                    timeout: 1m
+                    timeout: 2m
                 - step:
                     type: K8sCanaryDelete
                     name: Canary Delete
                     identifier: Canary_Delete
                     spec: {}
-                    timeout: 1m
+                    timeout: 2m
                 - step:
                     type: K8sRollingDeploy
                     name: Rolling Deployment
@@ -124,7 +119,7 @@ template:
                     spec:
                       skipDryRun: false
                       pruningEnabled: false
-                    timeout: 1m
+                    timeout: 2m
         rollbackSteps: []
     failureStrategies:
       - onFailure:

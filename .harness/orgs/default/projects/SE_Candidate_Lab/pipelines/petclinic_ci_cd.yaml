@@ -44,6 +44,13 @@ pipeline:
                   type: Run
                   name: Maven Build
                   identifier: mvn_build
+                  strategy:
+                    matrix:
+                      module:
+                        - spring-petclinic-api-gateway
+                        - spring-petclinic-customers-service
+                        - spring-petclinic-vets-service
+                        - spring-petclinic-visits-service
                   spec:
                     connectorRef: dockerhub_petclinic
                     image: maven:3.9.6-eclipse-temurin-8
@@ -51,6 +58,7 @@ pipeline:
                     command: mvn -B -pl "$MODULE" -am clean package -DskipTests
                     envVariables:
                       NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
+                      MODULE: <+matrix.module>
                     resources:
                       limits:
                         memory: 3Gi

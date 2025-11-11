@@ -229,75 +229,74 @@ pipeline:
                   name: Build All Images
                   identifier: Build_All_Images
                   steps:
-                    - parallel:
-                        - step:
-                            type: BuildAndPushDockerRegistry
-                            name: API Gateway Image
-                            identifier: build_push_gateway
-                            spec:
-                              connectorRef: dockerhub_push
-                              repo: areger55/harness-se-lab-dockerhub-repo
-                              tags:
-                                - gateway-<+codebase.commitSha>
-                                - gateway-latest
-                              caching: true
-                              buildArgs:
-                                MODULE: spring-petclinic-api-gateway
-                              resources:
-                                limits:
-                                  memory: 2Gi
-                                  cpu: "1"
-                        - step:
-                            type: BuildAndPushDockerRegistry
-                            name: Customers Image
-                            identifier: build_push_customers
-                            spec:
-                              connectorRef: dockerhub_push
-                              repo: areger55/harness-se-lab-dockerhub-repo
-                              tags:
-                                - customers-<+codebase.commitSha>
-                                - customers-latest
-                              caching: true
-                              buildArgs:
-                                MODULE: spring-petclinic-customers-service
-                              resources:
-                                limits:
-                                  memory: 2Gi
-                                  cpu: "1"
-                        - step:
-                            type: BuildAndPushDockerRegistry
-                            name: Vets Image
-                            identifier: build_push_vets
-                            spec:
-                              connectorRef: dockerhub_push
-                              repo: areger55/harness-se-lab-dockerhub-repo
-                              tags:
-                                - vets-<+codebase.commitSha>
-                                - vets-latest
-                              caching: true
-                              buildArgs:
-                                MODULE: spring-petclinic-vets-service
-                              resources:
-                                limits:
-                                  memory: 2Gi
-                                  cpu: "1"
-                        - step:
-                            type: BuildAndPushDockerRegistry
-                            name: Visits Image
-                            identifier: build_push_visits
-                            spec:
-                              connectorRef: dockerhub_push
-                              repo: areger55/harness-se-lab-dockerhub-repo
-                              tags:
-                                - visits-<+codebase.commitSha>
-                                - visits-latest
-                              caching: true
-                              buildArgs:
-                                MODULE: spring-petclinic-visits-service
-                              resources:
-                                limits:
-                                  memory: 2Gi
-                                  cpu: "1"
+                    - step:
+                        type: BuildAndPushDockerRegistry
+                        name: API Gateway Image
+                        identifier: build_push_gateway
+                        spec:
+                          connectorRef: dockerhub_push
+                          repo: areger55/harness-se-lab-dockerhub-repo
+                          tags:
+                            - gateway-<+codebase.commitSha>
+                            - gateway-latest
+                          caching: true
+                          buildArgs:
+                            MODULE: spring-petclinic-api-gateway
+                          resources:
+                            limits:
+                              memory: 2Gi
+                              cpu: "1"
+                    - step:
+                        type: BuildAndPushDockerRegistry
+                        name: Customers Image
+                        identifier: build_push_customers
+                        spec:
+                          connectorRef: dockerhub_push
+                          repo: areger55/harness-se-lab-dockerhub-repo
+                          tags:
+                            - customers-<+codebase.commitSha>
+                            - customers-latest
+                          caching: true
+                          buildArgs:
+                            MODULE: spring-petclinic-customers-service
+                          resources:
+                            limits:
+                              memory: 2Gi
+                              cpu: "1"
+                    - step:
+                        type: BuildAndPushDockerRegistry
+                        name: Vets Image
+                        identifier: build_push_vets
+                        spec:
+                          connectorRef: dockerhub_push
+                          repo: areger55/harness-se-lab-dockerhub-repo
+                          tags:
+                            - vets-<+codebase.commitSha>
+                            - vets-latest
+                          caching: true
+                          buildArgs:
+                            MODULE: spring-petclinic-vets-service
+                          resources:
+                            limits:
+                              memory: 2Gi
+                              cpu: "1"
+                    - step:
+                        type: BuildAndPushDockerRegistry
+                        name: Visits Image
+                        identifier: build_push_visits
+                        spec:
+                          connectorRef: dockerhub_push
+                          repo: areger55/harness-se-lab-dockerhub-repo
+                          tags:
+                            - visits-<+codebase.commitSha>
+                            - visits-latest
+                          caching: true
+                          buildArgs:
+                            MODULE: spring-petclinic-visits-service
+                          resources:
+                            limits:
+                              memory: 2Gi
+                              cpu: "1"
     - parallel:
         - stage:
             name: Deploy Customers to DEV

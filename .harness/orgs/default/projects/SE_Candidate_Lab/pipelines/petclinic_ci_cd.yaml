@@ -48,6 +48,7 @@ pipeline:
                     connectorRef: dockerhub_petclinic
                     image: maven:3.9.6-eclipse-temurin-8
                     shell: Sh
+                    command: mvn -B -pl "$MODULE" -am clean package -DskipTests
                     envVariables:
                       NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
                     resources:

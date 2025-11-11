@@ -67,12 +67,12 @@ template:
                             - AllErrors
                           action:
                             type: MarkAsFailure
-                - step:
-                    type: Wait
-                    name: Observe Canary
-                    identifier: Observe_Canary
-                    spec:
-                      duration: 1m
+                # - step:
+                  #   type: Wait
+                  #   name: Observe Canary
+                  #   identifier: Observe_Canary
+                  #   spec:
+                    #   duration: 1m
                 - step:
                     type: ShellScript
                     name: Check Canary Health
@@ -89,24 +89,37 @@ template:
                             app="<+stage.variables.appName>"
                             echo "Checking rollout for ${app}-canary in ${ns}..."
                             status=0
-                            if ! kubectl rollout status "deployment/${app}-canary" --namespace "${ns}" --timeout=180s; then
+                            if ! kubectl rollout status "deployment/${app}-canary" --namespace "${ns}" --timeout=120s; then
                               status=$?
                               echo "Canary deployment did not become ready within timeout (exit ${status})."
                             fi
 
-                            echo "Listing canary pods for quick inspection:"
-                            kubectl get pods --namespace "${ns}" -l harness.io/canary=true -o wide || true
-
-                            echo "Fetching recent logs from canary pod(s) for diagnostics..."
-                            mapfile -t pods < <(kubectl get pods --namespace "${ns}" -l harness.io/canary=true -o name)
-                            if [ ${#pods[@]} -eq 0 ]; then
-                              echo "No canary pods found to fetch logs from."
+                            selector=""
+                            release_label=$(kubectl get deployment "${app}-canary" --namespace "${ns}" -o jsonpath='{.metadata.labels.harness\.io/release-name}' 2>/dev/null || true)
+                            if [ -n "${release_label}" ]; then
+                              selector="harness.io/release-name=${release_label}"
                             else
-                              for pod in "${pods[@]}"; do
-                                echo "----- Logs for ${pod} -----"
-                                kubectl logs --namespace "${ns}" "${pod}" --tail=200 || true
-                                echo "----- End logs for ${pod} -----"
-                              done
+                              selector=$(kubectl get deployment "${app}-canary" --namespace "${ns}" -o jsonpath='{range $k,$v := .spec.selector.matchLabels}{$k}={$v},{end}' 2>/dev/null || true)
+                              selector="${selector%,}"
+                            fi
+
+                            if [ -z "${selector}" ]; then
+                              echo "Unable to determine a label selector for ${app}-canary; skipping pod listing and log collection."
+                            else
+                              echo "Listing canary pods for quick inspection (selector: ${selector}):"
+                              kubectl get pods --namespace "${ns}" -l "${selector}" -o wide || true
+
+                              echo "Fetching recent logs from canary pod(s) for diagnostics..."
+                              mapfile -t pods < <(kubectl get pods --namespace "${ns}" -l "${selector}" -o name)
+                              if [ ${#pods[@]} -eq 0 ]; then
+                                echo "No canary pods found to fetch logs from."
+                              else
+                                for pod in "${pods[@]}"; do
+                                  echo "----- Logs for ${pod} -----"
+                                  kubectl logs --namespace "${ns}" "${pod}" --tail=200 || true
+                                  echo "----- End logs for ${pod} -----"
+                                done
+                              fi
                             fi
                             exit ${status}
                       environmentVariables: []

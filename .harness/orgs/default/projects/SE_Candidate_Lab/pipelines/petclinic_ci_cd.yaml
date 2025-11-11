@@ -234,6 +234,10 @@ pipeline:
                               tags:
                                 - gateway-<+codebase.commitSha>
                                 - gateway-latest
+                              context: .
+                              dockerfile: Dockerfile
+                              arguments:
+                                - "--build-arg=MODULE=spring-petclinic-api-gateway"
                         - step:
                             type: BuildAndPushDockerRegistry
                             name: Customers Image
@@ -244,6 +248,10 @@ pipeline:
                               tags:
                                 - customers-<+codebase.commitSha>
                                 - customers-latest
+                              context: .
+                              dockerfile: Dockerfile
+                              arguments:
+                                - "--build-arg=MODULE=spring-petclinic-customers-service"
                         - step:
                             type: BuildAndPushDockerRegistry
                             name: Vets Image
@@ -254,6 +262,10 @@ pipeline:
                               tags:
                                 - vets-<+codebase.commitSha>
                                 - vets-latest
+                              context: .
+                              dockerfile: Dockerfile
+                              arguments:
+                                - "--build-arg=MODULE=spring-petclinic-vets-service"
                         - step:
                             type: BuildAndPushDockerRegistry
                             name: Visits Image
@@ -264,6 +276,10 @@ pipeline:
                               tags:
                                 - visits-<+codebase.commitSha>
                                 - visits-latest
+                              context: .
+                              dockerfile: Dockerfile
+                              arguments:
+                                - "--build-arg=MODULE=spring-petclinic-visits-service"
     - parallel:
         - stage:
             name: Deploy Customers to DEV

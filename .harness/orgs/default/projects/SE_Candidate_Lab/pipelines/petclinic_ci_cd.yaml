@@ -59,13 +59,6 @@ pipeline:
                     envVariables:
                       NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
                       MODULE: <+matrix.module>
-                    resources:
-                      limits:
-                        memory: 3Gi
-                        cpu: "2"
-                      requests:
-                        memory: 1Gi
-                        cpu: "1"
           caching:
             enabled: true
             paths: []
@@ -164,13 +157,6 @@ pipeline:
                     shell: Sh
                     envVariables:
                       NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
-                    resources:
-                      limits:
-                        memory: 3Gi
-                        cpu: "2"
-                      requests:
-                        memory: 1Gi
-                        cpu: "1"
                     command: |
                       # Clean up any previously cached plugin artifacts to avoid version conflicts
                       rm -rf /harness/.m2/repository/org/owasp/dependency-check-maven/
@@ -212,13 +198,6 @@ pipeline:
                     connectorRef: dockerhub_petclinic
                     additionalArgs: "-B -Dmaven.repo.local=/harness/.m2/repository -DargLine='-Xmx1024m -XX:MaxMetaspaceSize=512m' -DforkCount=1"
                     runOnlySelectedTests: false
-                    resources:
-                      limits:
-                        memory: 3Gi
-                        cpu: "2"
-                      requests:
-                        memory: 1Gi
-                        cpu: "1"
                     reports:
                       type: JUnit
                       spec:

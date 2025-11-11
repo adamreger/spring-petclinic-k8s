@@ -245,10 +245,7 @@ pipeline:
                                 MODULE: spring-petclinic-api-gateway
                               resources:
                                 limits:
-                                  memory: 3Gi
-                                  cpu: "2"
-                                requests:
-                                  memory: 1Gi
+                                  memory: 2Gi
                                   cpu: "1"
                         - step:
                             type: BuildAndPushDockerRegistry
@@ -265,10 +262,7 @@ pipeline:
                                 MODULE: spring-petclinic-customers-service
                               resources:
                                 limits:
-                                  memory: 3Gi
-                                  cpu: "2"
-                                requests:
-                                  memory: 1Gi
+                                  memory: 2Gi
                                   cpu: "1"
                         - step:
                             type: BuildAndPushDockerRegistry
@@ -285,10 +279,7 @@ pipeline:
                                 MODULE: spring-petclinic-vets-service
                               resources:
                                 limits:
-                                  memory: 3Gi
-                                  cpu: "2"
-                                requests:
-                                  memory: 1Gi
+                                  memory: 2Gi
                                   cpu: "1"
                         - step:
                             type: BuildAndPushDockerRegistry
@@ -305,10 +296,7 @@ pipeline:
                                 MODULE: spring-petclinic-visits-service
                               resources:
                                 limits:
-                                  memory: 3Gi
-                                  cpu: "2"
-                                requests:
-                                  memory: 1Gi
+                                  memory: 2Gi
                                   cpu: "1"
     - parallel:
         - stage:

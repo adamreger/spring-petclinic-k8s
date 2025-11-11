@@ -1,0 +1,15 @@
+.git
+.gitignore
+.harness
+.mvn
+.DS_Store
+target
+**/target
+docs/
+k8s/
+wavefront/
+spring-petclinic-*/.mvn/
+spring-petclinic-*/.gradle/
+ci-artifacts/*
+!ci-artifacts/jars/
+!ci-artifacts/jars/**

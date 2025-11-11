@@ -44,21 +44,40 @@ pipeline:
                   type: Run
                   name: Maven Build
                   identifier: mvn_build
-                  strategy:
-                    matrix:
-                      module:
-                        - spring-petclinic-api-gateway
-                        - spring-petclinic-customers-service
-                        - spring-petclinic-vets-service
-                        - spring-petclinic-visits-service
                   spec:
                     connectorRef: dockerhub_petclinic
                     image: maven:3.9.6-eclipse-temurin-8
                     shell: Sh
-                    command: mvn -B -pl "$MODULE" -am clean package -DskipTests
+                    command: |-
+                      set -euo pipefail
+                      modules="spring-petclinic-api-gateway,spring-petclinic-customers-service,spring-petclinic-vets-service,spring-petclinic-visits-service"
+                      IFS=',' read -r -a module_array <<< "${modules}"
+                      mvn -B -pl "${modules}" -am clean package -DskipTests
+                      for MODULE in "${module_array[@]}"; do
+                        echo "Collecting artifact for ${MODULE}"
+                        jar_path="$(
+                          find "${MODULE}/target" -maxdepth 1 -type f -name '*.jar' \
+                            | grep -Ev '(sources|javadoc|original|plain)\.jar$' || true
+                        )"
+                        jar_path="$(printf '%s\n' "${jar_path}" | head -n1)"
+                        if [ -z "${jar_path}" ]; then
+                          echo "No runnable jar produced for ${MODULE}" >&2
+                          exit 1
+                        fi
+                        dest="ci-artifacts/jars/${MODULE}"
+                        mkdir -p "${dest}"
+                        cp "${jar_path}" "${dest}/app.jar"
+                      done
                     envVariables:
                       NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
-                      MODULE: <+matrix.module>
+              - step:
+                  type: SaveCache
+                  name: Persist Built JARs
+                  identifier: SaveBuiltJars
+                  spec:
+                    key: built-jars-<+codebase.commitSha>
+                    paths:
+                      - ci-artifacts/jars
           caching:
             enabled: true
             paths: []
@@ -225,6 +244,14 @@ pipeline:
               os: Linux
           execution:
             steps:
+              - step:
+                  type: RestoreCache
+                  name: Restore Built JARs
+                  identifier: RestoreBuiltJars
+                  spec:
+                    key: built-jars-<+codebase.commitSha>
+                    paths:
+                      - ci-artifacts/jars
               - stepGroup:
                   name: Build All Images
                   identifier: Build_All_Images

@@ -148,63 +148,46 @@ pipeline:
                     image: owasp/dependency-check:12.0.2
                     shell: Sh
                     command: |-
-                      echo "=== Running OWASP Dependency Check on cached artifacts ==="
+                      #!/bin/sh
 
-                      DC_BIN="/usr/share/dependency-check/bin/dependency-check.sh"
-                      DC_DATA_DIR="/harness/.dependency-check-data"
-                      REPORT_DIR="/harness/dependency-check-report"
+                      DC_VERSION="latest"
+                      DC_DIRECTORY=$HOME/OWASP-Dependency-Check
+                      DC_PROJECT="dependency-check scan: $(pwd)"
+                      DATA_DIRECTORY="$DC_DIRECTORY/data"
+                      CACHE_DIRECTORY="$DC_DIRECTORY/data/cache"
 
-                      if [ ! -x "${DC_BIN}" ]; then
-                        echo "✗ Dependency-Check CLI is missing in the container image."
-                        exit 1
+                      if [ ! -d "$DATA_DIRECTORY" ]; then
+                          echo "Initially creating persistent directory: $DATA_DIRECTORY"
+                          mkdir -p "$DATA_DIRECTORY"
+                      fi
+                      if [ ! -d "$CACHE_DIRECTORY" ]; then
+                          echo "Initially creating persistent directory: $CACHE_DIRECTORY"
+                          mkdir -p "$CACHE_DIRECTORY"
                       fi
 
-                      if [ ! -d /harness/artifacts ]; then
-                        echo "✗ Cached artifacts directory not found at /harness/artifacts"
-                        exit 1
-                      fi
+                      # Make sure we are using the latest version
+                      docker pull owasp/dependency-check:$DC_VERSION
 
-                      mkdir -p "${DC_DATA_DIR}" "${REPORT_DIR}"
-                      DC_DB_PRESENT=$(find "${DC_DATA_DIR}" -maxdepth 1 -name "nvdcve*.mv.db" -print -quit)
-
-                      if [ -z "${DC_DB_PRESENT}" ]; then
-                        echo "No cached vulnerability database found; allowing Dependency-Check to download the latest feeds..."
-                        echo "This may add a few minutes to the first scan."
-                      else
-                        echo "Reusing cached vulnerability database (noupdate mode)."
-                      fi
-
-                      echo "Scanning cached JAR artifacts..."
-
-                      set -- \
-                        --project "spring-petclinic" \
-                        --scan "/harness/artifacts" \
-                        --out "${REPORT_DIR}" \
-                        --data "${DC_DATA_DIR}" \
-                        --format "HTML" \
-                        --format "JSON" \
-                        --format "XML" \
-                        --failOnCVSS 11
-
-                      if [ -n "${NVD_API_KEY}" ]; then
-                        set -- "$@" --nvdApiKey "${NVD_API_KEY}"
-                      fi
-
-                      if [ -n "${DC_DB_PRESENT}" ]; then
-                        set -- "$@" --noupdate
-                      fi
-
-                      "${DC_BIN}" "$@"
-
-                      echo "✓ Dependency-Check completed"
-                      echo "Reports available at: ${REPORT_DIR}/"
+                      docker run --rm \
+                          -e user=$USER \
+                          -u $(id -u ${USER}):$(id -g ${USER}) \
+                          --volume $(pwd):/src:z \
+                          --volume "$DATA_DIRECTORY":/usr/share/dependency-check/data:z \
+                          --volume $(pwd)/odc-reports:/report:z \
+                          owasp/dependency-check:$DC_VERSION \
+                          --scan /src \
+                          --format "ALL" \
+                          --project "$DC_PROJECT" \
+                          --out /report
+                          # Use suppression like this: (where /src == $pwd)
+                          # --suppression "/src/security/dependency-check-suppression.xml"
+                    envVariables:
+                      JAVA_TOOL_OPTIONS: "-Xms512m -Xmx4096m"
+                      NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
                     resources:
                       limits:
                         memory: 4Gi
                         cpu: "2"
-                    envVariables:
-                      JAVA_TOOL_OPTIONS: "-Xms512m -Xmx4096m"
-                      NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
                   failureStrategies:
                     - onFailure:
                         errors:

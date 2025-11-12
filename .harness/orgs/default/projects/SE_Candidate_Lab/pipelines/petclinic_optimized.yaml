@@ -145,50 +145,33 @@ pipeline:
                       <+pipeline.variables.SKIP_DEPCHECK> == "false" || <+pipeline.variables.DEPLOY_ENV> == "stg" || <+pipeline.variables.DEPLOY_ENV> == "prd"
                   spec:
                     connectorRef: dockerhub_petclinic
-                    image: maven:3.9.6-eclipse-temurin-17
+                    image: owasp/dependency-check:12.0.2
                     shell: Sh
                     command: |-
                       echo "=== Running OWASP Dependency Check on cached artifacts ==="
 
-                      unset MAVEN_CONFIG
-                      export MAVEN_OPTS="-Xms256m -Xmx1024m -XX:MaxMetaspaceSize=384m"
+                      DC_BIN="/usr/share/dependency-check/bin/dependency-check.sh"
+                      DC_DATA_DIR="/harness/.dependency-check-data"
+                      REPORT_DIR="/harness/dependency-check-report"
 
-                      # Install dependency-check CLI
-                      DC_VERSION=12.0.2
-                      DC_ARCHIVE="dependency-check-cli-${DC_VERSION}-release.zip"
-                      DC_BASE_PATH="${HOME}/.dependency-check"
-                      DC_BIN="${DC_BASE_PATH}/${DC_VERSION}"
-
-                      mkdir -p "${DC_BIN}"
-
-                      if [ ! -d "${DC_BIN}/dependency-check" ]; then
-                        echo "Downloading OWASP Dependency-Check CLI ${DC_VERSION}..."
-                        apt-get update && apt-get install -y curl unzip
-                        DC_URL="https://repo1.maven.org/maven2/org/owasp/dependency-check-cli/${DC_VERSION}/${DC_ARCHIVE}"
-                        curl -fsSL "${DC_URL}" -o "${DC_BIN}/${DC_ARCHIVE}"
-                        unzip -q "${DC_BIN}/${DC_ARCHIVE}" -d "${DC_BIN}"
+                      if [ ! -x "${DC_BIN}" ]; then
+                        echo "✗ Dependency-Check CLI is missing in the container image."
+                        exit 1
                       fi
 
-                      DC_HOME="${DC_BIN}/dependency-check"
-                      DC_DATA_DIR="${DC_BASE_PATH}/data"
-                      mkdir -p "${DC_DATA_DIR}"
+                      if [ ! -d /harness/artifacts ]; then
+                        echo "✗ Cached artifacts directory not found at /harness/artifacts"
+                        exit 1
+                      fi
 
-                      # Update vulnerability database
-                      #echo "Updating NVD database..."
-                      #"${DC_HOME}/bin/dependency-check.sh" \
-                      #  --data "${DC_DATA_DIR}" \
-                      #  --updateonly \
-                      #  --nvdApiKey "${NVD_API_KEY}" \
-                      #  --nvdApiDelay 4000
+                      mkdir -p "${DC_DATA_DIR}" "${REPORT_DIR}"
 
-                      # Scan the pre-built JARs (no rebuild needed!)
                       echo "Scanning cached JAR artifacts..."
-                      mkdir -p /harness/dependency-check-report
 
-                      "${DC_HOME}/bin/dependency-check.sh" \
+                      "${DC_BIN}" \
                         --project "spring-petclinic" \
                         --scan "/harness/artifacts" \
-                        --out "/harness/dependency-check-report" \
+                        --out "${REPORT_DIR}" \
                         --data "${DC_DATA_DIR}" \
                         --format "HTML" \
                         --format "JSON" \
@@ -197,7 +180,7 @@ pipeline:
                         --failOnCVSS 11
 
                       echo "✓ Dependency-Check completed"
-                      echo "Reports available at: /harness/dependency-check-report/"
+                      echo "Reports available at: ${REPORT_DIR}/"
                     envVariables:
                       NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
                   failureStrategies:

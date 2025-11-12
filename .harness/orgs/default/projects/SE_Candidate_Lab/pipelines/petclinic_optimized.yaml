@@ -21,7 +21,7 @@ pipeline:
       type: String
       value: <+input>.default(false).selectOneFrom(true,false)
     - name: CANARY_POD_COUNT
-      type: String
+      type: Number
       value: <+input>.default(1)
   stages:
     - stage:

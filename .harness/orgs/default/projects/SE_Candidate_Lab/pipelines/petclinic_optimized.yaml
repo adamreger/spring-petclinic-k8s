@@ -104,7 +104,7 @@ pipeline:
               - /harness/.m2/repository
               - /harness/artifacts
           buildIntelligence:
-            enabled: true
+            enabled: false
         description: Build all JAR artifacts once and cache them
     - stage:
         name: Security and Quality Checks
@@ -242,7 +242,7 @@ pipeline:
               - /harness/.m2/repository
               - /harness/artifacts
           buildIntelligence:
-            enabled: true
+            enabled: false
     - stage:
         name: Build and Push Container Images
         identifier: build_push_images

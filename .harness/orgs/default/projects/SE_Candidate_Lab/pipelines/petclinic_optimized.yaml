@@ -229,7 +229,7 @@ pipeline:
                         paths:
                           - "**/target/surefire-reports/*.xml"
                     envVariables:
-                      MAVEN_OPTS: "-Xms512m -Xmx3g"
+                      MAVEN_OPTS: "-Xms512m"
                       NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
                     enableTestSplitting: false
                   failureStrategies:

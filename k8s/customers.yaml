@@ -29,9 +29,9 @@ spec:
           imagePullPolicy: Always
           resources:
             requests:
-              memory: 1Gi
+              memory: 256Mi
             limits:
-              memory: 1Gi
+              memory: 512Mi
           envFrom:
             - configMapRef:
                 name: app

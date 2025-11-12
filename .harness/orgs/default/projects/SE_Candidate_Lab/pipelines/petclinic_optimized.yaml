@@ -147,8 +147,6 @@ pipeline:
                     connectorRef: dockerhub_petclinic
                     image: maven:3.9.6-eclipse-temurin-17
                     shell: Sh
-                    envVariables:
-                      NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
                     command: |-
                       echo "=== Running OWASP Dependency Check on cached artifacts ==="
 
@@ -176,12 +174,12 @@ pipeline:
                       mkdir -p "${DC_DATA_DIR}"
 
                       # Update vulnerability database
-                      echo "Updating NVD database..."
-                      "${DC_HOME}/bin/dependency-check.sh" \
-                        --data "${DC_DATA_DIR}" \
-                        --updateonly \
-                        --nvdApiKey "${NVD_API_KEY}" \
-                        --nvdApiDelay 4000
+                      #echo "Updating NVD database..."
+                      #"${DC_HOME}/bin/dependency-check.sh" \
+                      #  --data "${DC_DATA_DIR}" \
+                      #  --updateonly \
+                      #  --nvdApiKey "${NVD_API_KEY}" \
+                      #  --nvdApiDelay 4000
 
                       # Scan the pre-built JARs (no rebuild needed!)
                       echo "Scanning cached JAR artifacts..."
@@ -200,6 +198,8 @@ pipeline:
 
                       echo "✓ Dependency-Check completed"
                       echo "Reports available at: /harness/dependency-check-report/"
+                    envVariables:
+                      NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
                   failureStrategies:
                     - onFailure:
                         errors:

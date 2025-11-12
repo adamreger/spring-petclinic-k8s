@@ -165,10 +165,18 @@ pipeline:
                       fi
 
                       mkdir -p "${DC_DATA_DIR}" "${REPORT_DIR}"
+                      DC_DB_PRESENT=$(find "${DC_DATA_DIR}" -maxdepth 1 -name "nvdcve*.mv.db" -print -quit)
+
+                      if [ -z "${DC_DB_PRESENT}" ]; then
+                        echo "No cached vulnerability database found; allowing Dependency-Check to download the latest feeds..."
+                        echo "This may add a few minutes to the first scan."
+                      else
+                        echo "Reusing cached vulnerability database (noupdate mode)."
+                      fi
 
                       echo "Scanning cached JAR artifacts..."
 
-                      "${DC_BIN}" \
+                      set -- \
                         --project "spring-petclinic" \
                         --scan "/harness/artifacts" \
                         --out "${REPORT_DIR}" \
@@ -176,8 +184,17 @@ pipeline:
                         --format "HTML" \
                         --format "JSON" \
                         --format "XML" \
-                        --noupdate \
                         --failOnCVSS 11
+
+                      if [ -n "${NVD_API_KEY}" ]; then
+                        set -- "$@" --nvdApiKey "${NVD_API_KEY}"
+                      fi
+
+                      if [ -n "${DC_DB_PRESENT}" ]; then
+                        set -- "$@" --noupdate
+                      fi
+
+                      "${DC_BIN}" "$@"
 
                       echo "✓ Dependency-Check completed"
                       echo "Reports available at: ${REPORT_DIR}/"

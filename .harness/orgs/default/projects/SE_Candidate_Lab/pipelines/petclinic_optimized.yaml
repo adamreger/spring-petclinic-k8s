@@ -199,7 +199,7 @@ pipeline:
                       echo "✓ Dependency-Check completed"
                       echo "Reports available at: ${REPORT_DIR}/"
                     envVariables:
-                      JAVA_TOOL_OPTIONS: "-Xms512m -Xmx4096m -XX:+UseG1GC"
+                      JAVA_TOOL_OPTIONS: "-Xms512m -Xmx4096m"
                       NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
                   failureStrategies:
                     - onFailure:
@@ -229,7 +229,7 @@ pipeline:
                         paths:
                           - "**/target/surefire-reports/*.xml"
                     envVariables:
-                      MAVEN_OPTS: "-Xms512m -Xmx3g -XX:+UseG1GC"
+                      MAVEN_OPTS: "-Xms512m -Xmx3g"
                       NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
                     enableTestSplitting: false
                   failureStrategies:

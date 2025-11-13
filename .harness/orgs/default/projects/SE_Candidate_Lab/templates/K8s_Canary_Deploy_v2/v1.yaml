@@ -95,6 +95,11 @@ template:
                             else
                               selector=$(kubectl get deployment "${app}-canary" --namespace "${ns}" -o jsonpath='{range $k,$v := .spec.selector.matchLabels}{$k}={$v},{end}' 2>/dev/null || true)
                               selector="${selector%,}"
+                              if [ -z "${selector}" ]; then
+                                # Fall back to the pod template labels in case matchLabels isn't populated (e.g., matchExpressions only)
+                                selector=$(kubectl get deployment "${app}-canary" --namespace "${ns}" -o jsonpath='{range $k,$v := .spec.template.metadata.labels}{$k}={$v},{end}' 2>/dev/null || true)
+                                selector="${selector%,}"
+                              fi
                             fi
 
                             if [ -z "${selector}" ]; then

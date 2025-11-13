@@ -55,9 +55,7 @@ pipeline:
                     connectorRef: dockerhub_petclinic
                     image: maven:3.9.6-eclipse-temurin-8
                     shell: Sh
-                    envVariables:
-                      MODULE: <+matrix.module>
-                    command: |
+                    command: |-
                       unset MAVEN_CONFIG
                       chmod +x mvnw
                       export MAVEN_OPTS="-Xmx2g"
@@ -70,6 +68,11 @@ pipeline:
                       # Verify JAR was created
                       echo "=== Built JAR for $MODULE ==="
                       find ${MODULE}/target -name "*.jar" -type f | head -5
+                    envVariables:
+                      MODULE: <+matrix.module>
+                    resources:
+                      limits:
+                        memory: 2G
               - step:
                   type: Run
                   name: Prepare Artifacts

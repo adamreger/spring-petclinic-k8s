@@ -148,9 +148,7 @@ pipeline:
                     config: default
                     target:
                       type: repository
-                      detection: manual
-                      name: adamreger/spring-petclinic-k8s
-                      variant: master
+                      detection: auto
                     advanced:
                       log:
                         level: debug

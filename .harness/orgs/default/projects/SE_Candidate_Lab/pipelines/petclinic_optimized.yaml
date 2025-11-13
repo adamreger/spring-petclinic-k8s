@@ -136,8 +136,28 @@ pipeline:
                         exit 1
                       fi
               - step:
-                  type: Run
+                  type: Owasp
                   name: OWASP Dependency Check
+                  identifier: OWASP_Dependency_Check
+                  when:
+                    stageStatus: Success
+                    condition: |
+                      <+pipeline.variables.SKIP_DEPCHECK> == "false" || <+pipeline.variables.DEPLOY_ENV> == "stg" || <+pipeline.variables.DEPLOY_ENV> == "prd"
+                  spec:
+                    mode: orchestration
+                    config: default
+                    target:
+                      type: repository
+                      detection: manual
+                      name: adamreger/spring-petclinic-k8s
+                      variant: master
+                    advanced:
+                      log:
+                        level: info
+                      fail_on_severity: none
+              - step:
+                  type: Run
+                  name: OWASP OLD
                   identifier: owasp_dependency_check
                   when:
                     stageStatus: Success

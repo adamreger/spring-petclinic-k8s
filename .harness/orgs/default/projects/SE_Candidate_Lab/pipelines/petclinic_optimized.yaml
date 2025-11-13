@@ -208,7 +208,6 @@ pipeline:
                           - "**/target/surefire-reports/*.xml"
                     envVariables:
                       MAVEN_OPTS: "-Xms512m"
-                      NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>
                     resources:
                       limits:
                         memory: 4Gi
@@ -450,3 +449,5 @@ pipeline:
                   - name: canaryCount
                     type: Number
                     value: <+pipeline.variables.CANARY_POD_COUNT>
+  allowStageExecutions: true
+  fixedInputsOnRerun: false

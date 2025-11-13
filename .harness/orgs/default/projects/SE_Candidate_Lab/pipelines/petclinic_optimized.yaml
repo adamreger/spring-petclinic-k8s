@@ -153,6 +153,8 @@ pipeline:
                       log:
                         level: debug
                       fail_on_severity: none
+                      args:
+                        cli: "--disableOssIndex"
                     privileged: true
               - step:
                   type: Run

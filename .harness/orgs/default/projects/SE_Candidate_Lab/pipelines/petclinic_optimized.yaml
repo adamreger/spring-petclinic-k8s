@@ -153,8 +153,9 @@ pipeline:
                       variant: master
                     advanced:
                       log:
-                        level: info
+                        level: debug
                       fail_on_severity: none
+                    privileged: true
               - step:
                   type: Run
                   name: OWASP OLD

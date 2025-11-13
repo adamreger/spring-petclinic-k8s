@@ -109,7 +109,7 @@ pipeline:
                     connectorRef: harnessbuilddependencycache
                     region: us-west-1
                     bucket: harness-build-dependency-cache
-                    key: petclinic-{{ checksum filePath1 }}
+                    key: artifacts/<+codebase.repoName>/<+codebase.branch>/<+codebase.commitSha>
                     sourcePaths:
                       - /harness/artifacts
                     archiveFormat: Tar
@@ -138,7 +138,7 @@ pipeline:
                     connectorRef: harnessbuilddependencycache
                     region: us-west-1
                     bucket: harness-build-dependency-cache
-                    key: petclinic-{{ checksum filePath1 }}
+                    key: artifacts/<+codebase.repoName>/<+codebase.branch>/<+codebase.commitSha>
                     archiveFormat: Tar
               - step:
                   type: Run
@@ -243,7 +243,7 @@ pipeline:
                     connectorRef: harnessbuilddependencycache
                     region: us-west-1
                     bucket: harness-build-dependency-cache
-                    key: petclinic-{{ checksum filePath1 }}
+                    key: artifacts/<+codebase.repoName>/<+codebase.branch>/<+codebase.commitSha>
                     archiveFormat: Tar
               - step:
                   type: Run

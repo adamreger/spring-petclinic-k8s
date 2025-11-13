@@ -98,13 +98,23 @@ pipeline:
                       ls -lh /harness/artifacts/
                       echo ""
                       echo "Total size: $(du -sh /harness/artifacts/ | cut -f1)"
+              - step:
+                  type: SaveCacheS3
+                  name: Save Build Artifacts to S3
+                  identifier: save_build_artifacts_to_s3
+                  spec:
+                    connectorRef: harnessbuilddependencycache
+                    region: us-west-1
+                    bucket: harness-build-dependency-cache
+                    key: petclinic-{{ checksum filePath1 }}
+                    sourcePaths:
+                      - /harness/artifacts
+                    archiveFormat: Tar
+                    override: true
           caching:
             enabled: true
-            paths:
-              - /harness/.m2/repository
-              - /harness/artifacts
           buildIntelligence:
-            enabled: false
+            enabled: true
         description: Build all JAR artifacts once and cache them
     - stage:
         name: Security and Quality Checks
@@ -117,6 +127,16 @@ pipeline:
             useFromStage: build_package
           execution:
             steps:
+              - step:
+                  type: RestoreCacheS3
+                  name: Restore Artifacts from S3
+                  identifier: restore_artifacts_from_s3
+                  spec:
+                    connectorRef: harnessbuilddependencycache
+                    region: us-west-1
+                    bucket: harness-build-dependency-cache
+                    key: petclinic-{{ checksum filePath1 }}
+                    archiveFormat: Tar
               - step:
                   type: Run
                   name: Verify Cached Artifacts
@@ -193,9 +213,6 @@ pipeline:
                           type: Ignore
           caching:
             enabled: true
-            paths:
-              - /harness/.m2/repository
-              - /harness/artifacts
           buildIntelligence:
             enabled: false
     - stage:
@@ -215,6 +232,16 @@ pipeline:
               os: Linux
           execution:
             steps:
+              - step:
+                  type: RestoreCacheS3
+                  name: Restore Artifacts from S3
+                  identifier: Restore_Artifacts_from_S3
+                  spec:
+                    connectorRef: harnessbuilddependencycache
+                    region: us-west-1
+                    bucket: harness-build-dependency-cache
+                    key: petclinic-{{ checksum filePath1 }}
+                    archiveFormat: Tar
               - step:
                   type: Run
                   name: Verify Artifacts for Docker Build
@@ -320,9 +347,8 @@ pipeline:
                               memory: 2Gi
                               cpu: "1"
           caching:
-            enabled: true
-            paths:
-              - /harness/artifacts
+            enabled: false
+            paths: []
           buildIntelligence:
             enabled: true
     - parallel:

@@ -29,8 +29,22 @@
         <spring-boot.version>2.3.3.RELEASE</spring-boot.version>
         <spring-cloud.version>Hoxton.SR7</spring-cloud.version>
 
-        <maven-surefire-plugin.version>2.22.0</maven-surefire-plugin.version>
+        <harnessArgLine></harnessArgLine>
     </properties>
+
+    <build>
+        <plugins>
+            <!-- Configuring the Surefire plugin to enable Harness Test Intelligence -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.22.2</version>
+                <configuration>
+                    <argLine>${harnessArgLine}</argLine>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 
     <dependencyManagement>
         <dependencies>

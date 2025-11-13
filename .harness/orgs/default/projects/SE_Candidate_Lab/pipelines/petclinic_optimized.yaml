@@ -148,16 +148,22 @@ pipeline:
                     connectorRef: dockerhub_petclinic
                     image: alpine:3.18
                     shell: Sh
-                    command: |
+                    command: |-
                       echo "=== Verifying cached artifacts ==="
-                      if [ -d /harness/artifacts ]; then
-                        ls -lh /harness/artifacts/
-                        echo ""
-                        echo "✓ All artifacts restored automatically by Harness Cache Intelligence"
-                      else
-                        echo "✗ Artifacts directory not found!"
-                        exit 1
-                      fi
+                      ls -lh /harness/artifacts/
+
+                      # Verify each required JAR exists
+                      for jar in api-gateway.jar customers-service.jar vets-service.jar visits-service.jar; do
+                        if [ -f "/harness/artifacts/${jar}" ]; then
+                          echo "✓ ${jar} found ($(du -h /harness/artifacts/${jar} | cut -f1))"
+                        else
+                          echo "✗ ${jar} NOT FOUND!"
+                          exit 1
+                        fi
+                      done
+
+                      echo ""
+                      echo "✓ Successfully restored all artifacts from S3 build cache"
               - step:
                   type: Owasp
                   name: OWASP Dependency Check
@@ -253,7 +259,7 @@ pipeline:
                     connectorRef: dockerhub_petclinic
                     image: alpine:3.18
                     shell: Sh
-                    command: |
+                    command: |-
                       echo "=== Verifying artifacts for Docker builds ==="
                       ls -lh /harness/artifacts/
 
@@ -268,7 +274,7 @@ pipeline:
                       done
 
                       echo ""
-                      echo "✓ All artifacts restored automatically by Harness Cache Intelligence"
+                      echo "✓ Successfully restored all artifacts from S3 build cache"
               - stepGroup:
                   name: Build All Images
                   identifier: Build_All_Images

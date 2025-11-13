@@ -149,12 +149,13 @@ pipeline:
                     shell: Sh
                     command: |-
                       #!/bin/sh
+                      set -e
+                      echo "=== Running OWASP Dependency Check on cached artifacts ==="
 
-                      DC_VERSION="latest"
                       DC_DIRECTORY=$HOME/OWASP-Dependency-Check
-                      DC_PROJECT="dependency-check scan: $(pwd)"
                       DATA_DIRECTORY="$DC_DIRECTORY/data"
                       CACHE_DIRECTORY="$DC_DIRECTORY/data/cache"
+                      REPORT_DIRECTORY="$DC_DIRECTORY/reports"
 
                       if [ ! -d "$DATA_DIRECTORY" ]; then
                           echo "Initially creating persistent directory: $DATA_DIRECTORY"
@@ -164,23 +165,39 @@ pipeline:
                           echo "Initially creating persistent directory: $CACHE_DIRECTORY"
                           mkdir -p "$CACHE_DIRECTORY"
                       fi
+                      if [ ! -d "$REPORT_DIRECTORY" ]; then
+                          echo "Initially creating persistent directory: $REPORT_DIRECTORY"
+                          mkdir -p "$REPORT_DIRECTORY"
+                      fi
 
-                      # Make sure we are using the latest version
-                      docker pull owasp/dependency-check:$DC_VERSION
+                      if [ -z "$NVD_API_KEY" ]; then
+                        echo "ERROR: NVD_API_KEY is not set but is required for NVD updates." >&2
+                        exit 1
+                      fi
 
-                      docker run --rm \
-                          -e user=$USER \
-                          -u $(id -u ${USER}):$(id -g ${USER}) \
-                          --volume $(pwd):/src:z \
-                          --volume "$DATA_DIRECTORY":/usr/share/dependency-check/data:z \
-                          --volume $(pwd)/odc-reports:/report:z \
-                          owasp/dependency-check:$DC_VERSION \
-                          --scan /src \
-                          --format "ALL" \
-                          --project "$DC_PROJECT" \
-                          --out /report
-                          # Use suppression like this: (where /src == $pwd)
-                          # --suppression "/src/security/dependency-check-suppression.xml"
+                      # Update vulnerability database
+                      echo "Updating NVD database..."
+                      "$DC_DIRECTORY/dependency-check/bin/dependency-check.sh" \
+                          --data "$DATA_DIRECTORY" \
+                          --updateonly \
+                          --nvdApiKey "$NVD_API_KEY" \
+                          --nvdApiDelay 4000
+
+                      # Scan the pre-built JARs
+                      echo "Scanning cached JAR artifacts..."
+                      "$DC_DIRECTORY/dependency-check/bin/dependency-check.sh" \
+                          --project "spring-petclinic" \
+                          --scan "/harness/artifacts" \
+                          --out "$REPORT_DIRECTORY" \
+                          --data "$DATA_DIRECTORY" \
+                          --format "HTML" \
+                          --format "JSON" \
+                          --format "XML" \
+                          --noupdate \
+                          --failOnCVSS 11
+
+                      echo "✓ Dependency-Check completed"
+                      echo "Reports available at: $REPORT_DIRECTORY"
                     envVariables:
                       JAVA_TOOL_OPTIONS: "-Xms512m -Xmx4096m"
                       NVD_API_KEY: <+secrets.getValue("NVD_API_KEY")>

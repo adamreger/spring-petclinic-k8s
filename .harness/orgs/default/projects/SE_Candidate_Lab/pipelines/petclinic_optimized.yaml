@@ -152,10 +152,10 @@ pipeline:
                       set -e
                       echo "=== Running OWASP Dependency Check on cached artifacts ==="
 
-                      DC_DIRECTORY=$HOME/OWASP-Dependency-Check
-                      DATA_DIRECTORY="$DC_DIRECTORY/data"
-                      CACHE_DIRECTORY="$DC_DIRECTORY/data/cache"
-                      REPORT_DIRECTORY="$DC_DIRECTORY/reports"
+                      DC_HOME="$HOME/dependency-check"
+                      DATA_DIRECTORY="$DC_HOME/data"
+                      CACHE_DIRECTORY="$DC_HOME/data/cache"
+                      REPORT_DIRECTORY="$DC_HOME/reports"
 
                       if [ ! -d "$DATA_DIRECTORY" ]; then
                           echo "Initially creating persistent directory: $DATA_DIRECTORY"
@@ -177,7 +177,7 @@ pipeline:
 
                       # Update vulnerability database
                       echo "Updating NVD database..."
-                      "$DC_DIRECTORY/dependency-check/bin/dependency-check.sh" \
+                      "$DC_HOME/dependency-check/bin/dependency-check.sh" \
                           --data "$DATA_DIRECTORY" \
                           --updateonly \
                           --nvdApiKey "$NVD_API_KEY" \
@@ -185,7 +185,7 @@ pipeline:
 
                       # Scan the pre-built JARs
                       echo "Scanning cached JAR artifacts..."
-                      "$DC_DIRECTORY/dependency-check/bin/dependency-check.sh" \
+                      "$DC_HOME/dependency-check/bin/dependency-check.sh" \
                           --project "spring-petclinic" \
                           --scan "/harness/artifacts" \
                           --out "$REPORT_DIRECTORY" \

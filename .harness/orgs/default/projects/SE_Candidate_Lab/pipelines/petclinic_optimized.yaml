@@ -222,8 +222,9 @@ pipeline:
                   description: Run all tests for modules using Harness Test Intelligence
           caching:
             enabled: true
+            paths: []
           buildIntelligence:
-            enabled: false
+            enabled: true
     - stage:
         name: Build and Push Container Images
         identifier: build_push_images

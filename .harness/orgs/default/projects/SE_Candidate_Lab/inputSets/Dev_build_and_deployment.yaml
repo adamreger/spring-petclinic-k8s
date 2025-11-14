@@ -1,0 +1,27 @@
+inputSet:
+  name: Dev build and deployment
+  identifier: Dev_build_and_deployment
+  orgIdentifier: default
+  projectIdentifier: SE_Candidate_Lab
+  pipeline:
+    identifier: petclinic_optimized
+    properties:
+      ci:
+        codebase:
+          build:
+            type: branch
+            spec:
+              branch: <+trigger.branch>
+    variables:
+      - name: DEPLOY_ENV
+        type: String
+        value: dev
+      - name: SKIP_DEPCHECK
+        type: String
+        value: "true"
+      - name: SKIP_BUILD_TEST
+        type: String
+        value: "true"
+      - name: CANARY_POD_COUNT
+        type: Number
+        value: 1

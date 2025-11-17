@@ -81,8 +81,10 @@ template:
                             set -euo pipefail
                             ns="<+infra.namespace>"
                             app="<+stage.variables.appName>"
+
                             echo "Checking rollout for ${app}-canary in ${ns}..."
                             status=0
+
                             if ! kubectl rollout status "deployment/${app}-canary" --namespace "${ns}" --timeout=120s; then
                               status=$?
                               echo "Canary deployment did not become ready within timeout (exit ${status})."
@@ -114,10 +116,54 @@ template:
                                 done
                               fi
                             fi
+
+                            echo "Running basic canary health check..."
+                            # Example: call a health endpoint or simple smoke test
+                            if ! curl -fsS "http://${app}-canary.${ns}.svc.cluster.local/actuator/health" | grep '"status":"UP"' >/dev/null 2>&1; then
+                              echo "Health check failed for canary deployment."
+                              status=1
+                            fi
+
                             exit ${status}
                       environmentVariables: []
                       outputVariables: []
                     timeout: 2m
+                    failureStrategies:
+                      - onFailure:
+                          errors:
+                            - AllErrors
+                          action:
+                            type: MarkAsFailure
+                - step:
+                    type: HarnessApproval
+                    name: Post-Canary Promotion Approval
+                    identifier: PostCanary_Promotion_Approval
+                    spec:
+                      approvalMessage: Promote canary for <+stage.variables.serviceName> in <+stage.variables.envRef> to full rollout?
+                      includePipelineExecutionHistory: true
+                      isAutoRejectEnabled: false
+                      approvers:
+                        userGroups:
+                          - org._ORG_PROD_DEPLOYERS_
+                          - org._ORG_SRE_ONCALL_
+                        minimumCount: 1
+                        disallowPipelineExecutor: false
+                      approverInputs:
+                        - name: test
+                          defaultValue: this
+                    timeout: 1h
+                    when:
+                      stageStatus: Success
+                      condition: <+pipeline.variables.DEPLOY_ENV> == "prd"
+                    approvalCriteria:
+                      type: Criteria
+                      spec:
+                        conditions:
+                          - type: APPROVAL_CONDITION
+                            spec:
+                              comparator: EQ
+                              fieldName: HarnessApproval
+                              value: "true"
                 - step:
                     type: K8sCanaryDelete
                     name: Canary Delete

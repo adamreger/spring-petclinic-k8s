@@ -13,7 +13,7 @@ pipeline:
   variables:
     - name: DEPLOY_ENV
       type: String
-      value: <+input>.default(dev).selectOneFrom(dev,stg,prd)
+      value: <+input>.default(dev).selectOneFrom(dev,stage,prod)
     - name: SKIP_DEPCHECK
       type: String
       value: <+input>.default(false).selectOneFrom(true,false)
@@ -171,7 +171,7 @@ pipeline:
                   when:
                     stageStatus: Success
                     condition: |
-                      <+pipeline.variables.SKIP_DEPCHECK> == "false" || <+pipeline.variables.DEPLOY_ENV> == "stg" || <+pipeline.variables.DEPLOY_ENV> == "prd"
+                      <+pipeline.variables.SKIP_DEPCHECK> == "false" || <+pipeline.variables.DEPLOY_ENV> == "stage" || <+pipeline.variables.DEPLOY_ENV> == "prod"
                   spec:
                     mode: orchestration
                     config: default
@@ -191,7 +191,7 @@ pipeline:
                   identifier: unit_tests
                   when:
                     stageStatus: Success
-                    condition: <+pipeline.variables.SKIP_BUILD_TEST> == "false" || <+pipeline.variables.DEPLOY_ENV> == "stg" ||  <+pipeline.variables.DEPLOY_ENV> == "prd"
+                    condition: <+pipeline.variables.SKIP_BUILD_TEST> == "false" || <+pipeline.variables.DEPLOY_ENV> == "stage" ||  <+pipeline.variables.DEPLOY_ENV> == "prod"
                   spec:
                     connectorRef: dockerhub_petclinic
                     image: maven:3.9.6-eclipse-temurin-8

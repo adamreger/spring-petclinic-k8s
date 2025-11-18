@@ -141,9 +141,7 @@ template:
                           - org._ORG_SRE_ONCALL_
                         minimumCount: 1
                         disallowPipelineExecutor: false
-                      approverInputs:
-                        - name: test
-                          defaultValue: this
+                      approverInputs: []
                     timeout: 1h
                     when:
                       stageStatus: Success

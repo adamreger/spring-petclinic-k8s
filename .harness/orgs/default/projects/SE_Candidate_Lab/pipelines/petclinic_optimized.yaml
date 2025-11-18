@@ -183,7 +183,7 @@ pipeline:
                         level: info
                       fail_on_severity: none
                       args:
-                        cli: '--property analyzer.central.retryCount=2 --ossIndexUsername <+secrets.getValue("OSS_INDEX_USERNAME")> --ossIndexPassword <+secrets.getValue("OSS_INDEX_PASSWORD")>'
+                        cli: "--ossIndexUsername <+secrets.getValue(\"OSS_INDEX_USERNAME\")> --ossIndexPassword <+secrets.getValue(\"OSS_INDEX_PASSWORD\")>"
                     privileged: false
               - step:
                   type: RunTests

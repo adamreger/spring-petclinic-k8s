@@ -39,7 +39,7 @@ template:
                     timeout: 1h
                     when:
                       stageStatus: Success
-                      condition: <+pipeline.variables.DEPLOY_ENV> == "prd"
+                      condition: <+pipeline.variables.DEPLOY_ENV> == "prod"
                     approvalCriteria:
                       type: Criteria
                       spec:
@@ -147,7 +147,7 @@ template:
                     timeout: 1h
                     when:
                       stageStatus: Success
-                      condition: <+pipeline.variables.DEPLOY_ENV> == "prd"
+                      condition: <+pipeline.variables.DEPLOY_ENV> == "prod"
                     approvalCriteria:
                       type: Criteria
                       spec:

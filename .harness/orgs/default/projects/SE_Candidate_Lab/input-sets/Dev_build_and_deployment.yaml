@@ -1,6 +1,6 @@
 inputSet:
   name: Dev build and deployment
-  identifier: Dev_build_and_deployment
+  identifier: dev_build_and_deployment
   orgIdentifier: default
   projectIdentifier: SE_Candidate_Lab
   pipeline:

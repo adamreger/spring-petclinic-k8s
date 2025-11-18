@@ -171,7 +171,13 @@ template:
                       skipDryRun: false
                       pruningEnabled: false
                     timeout: 2m
-        rollbackSteps: []
+        rollbackSteps:
+          - step:
+              type: K8sCanaryDelete
+              name: Canary Delete (Rollback)
+              identifier: Canary_Delete_Rollback
+              spec: {}
+              timeout: 2m
     failureStrategies:
       - onFailure:
           errors:

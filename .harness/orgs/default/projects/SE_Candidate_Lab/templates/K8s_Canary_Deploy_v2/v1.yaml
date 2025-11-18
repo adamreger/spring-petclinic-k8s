@@ -174,8 +174,8 @@ template:
         rollbackSteps:
           - step:
               type: K8sCanaryDelete
-              name: Canary Delete (Rollback)
-              identifier: Canary_Delete_Rollback
+              name: Canary Rollback
+              identifier: canary_rollback
               spec: {}
               timeout: 2m
     failureStrategies:

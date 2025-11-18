@@ -180,7 +180,7 @@ pipeline:
                       detection: auto
                     advanced:
                       log:
-                        level: debug
+                        level: info
                       fail_on_severity: none
                       args:
                         cli: "--disableOssIndex"

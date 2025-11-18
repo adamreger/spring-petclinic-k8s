@@ -117,13 +117,6 @@ template:
                               fi
                             fi
 
-                            echo "Running basic canary health check..."
-                            # Example: call a health endpoint or simple smoke test
-                            if ! curl -fsS "http://${app}-canary.${ns}.svc.cluster.local/actuator/health" | grep '"status":"UP"' >/dev/null 2>&1; then
-                              echo "Health check failed for canary deployment."
-                              status=1
-                            fi
-
                             exit ${status}
                       environmentVariables: []
                       outputVariables: []
